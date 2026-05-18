@@ -1,0 +1,697 @@
+@page "/register"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using NekiConnect.Data
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Navigation
+@inject NGOService NgoService
+
+
+<PageTitle>Create Account — NekiConnect</PageTitle>
+
+<style>
+    .pg { background: #f8fdf9; min-height: 100vh; padding-bottom: 40px; }
+    .nav { display: flex; align-items: center; justify-content: space-between; padding: 13px 28px; background: #fff; border-bottom: 1px solid #e5e7eb; }
+    .brand { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: #111; text-decoration: none; }
+    .bico { width: 30px; height: 30px; background: #16a34a; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .brand em { color: #16a34a; font-style: italic; }
+    .nlinks { display: flex; align-items: center; gap: 22px; font-size: 13px; }
+    .nlinks a { color: #374151; text-decoration: none; font-weight: 500; }
+    .nlinks a:hover { color: #16a34a; }
+    .btn-login { font-size: 13px; color: #374151; background: none; border: none; cursor: pointer; padding: 7px 10px; }
+    .btn-regnav { background: #16a34a; color: #fff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .page-body { display: flex; flex-direction: column; align-items: center; padding: 36px 16px 0; }
+    .pico { width: 50px; height: 50px; background: #16a34a; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+    .ptitle { font-size: 24px; font-weight: 700; color: #111; margin-bottom: 4px; }
+    .psub { font-size: 13px; color: #6b7280; margin-bottom: 24px; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 24px 26px; width: 100%; max-width: 480px; }
+    .rl { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #9ca3af; margin-bottom: 8px; }
+    .tabs { display: flex; background: #f1f5f1; border-radius: 10px; padding: 3px; margin-bottom: 22px; gap: 2px; }
+    .tab-btn { flex: 1; padding: 8px 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: #6b7280; }
+    .tab-btn.active { background: #fff; color: #16a34a; border: 1px solid #d1fae5; }
+    .fg { margin-bottom: 13px; }
+    .fg label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+    .fg input, .fg select { width: 100%; padding: 9px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; color: #111; background: #fff; outline: none; box-sizing: border-box; }
+    .fg input:focus, .fg select:focus { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.08); }
+    .fg input.invalid { border-color: #ef4444; }
+    .fg input.valid { border-color: #16a34a; }
+    .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field-err { font-size: 11px; color: #dc2626; margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+    .info-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #166534; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.5; }
+    .pwd-rules { margin: 4px 0 12px 1px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+    .rule { font-size: 11px; color: #9ca3af; display: flex; align-items: center; gap: 5px; }
+    .rule.met { color: #15803d; font-weight: 500; }
+    .rule-dot { width: 5px; height: 5px; border-radius: 50%; background: #d1d5db; flex-shrink: 0; display: inline-block; }
+    .rule.met .rule-dot { background: #16a34a; }
+    .trow { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+    .trow input[type=checkbox] { width: 15px; height: 15px; margin-top: 2px; accent-color: #16a34a; cursor: pointer; flex-shrink: 0; }
+    .trow label { font-size: 12px; color: #374151; line-height: 1.6; cursor: pointer; }
+    .trow a { color: #16a34a; text-decoration: none; }
+    .submit-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 14px; background: #16a34a; color: #fff; cursor: pointer; }
+    .submit-btn:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+    .submit-btn:hover:not(:disabled) { background: #15803d; }
+    .slink { text-align: center; font-size: 12px; color: #6b7280; }
+    .slink a { color: #16a34a; font-weight: 600; text-decoration: none; }
+    .alert-err { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 9px 12px; font-size: 12px; color: #dc2626; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .alert-suc { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 9px 12px; font-size: 12px; color: #15803d; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    /* Hide browser native password eye — we use our own */
+    input[type=password]::-ms-reveal,
+    input[type=password]::-ms-clear,
+    input[type=password]::-webkit-credentials-auto-fill-button { display: none !important; }
+    /* Eye toggle wrapper */
+    .pwd-wrap { position: relative; }
+    .pwd-wrap input { padding-right: 38px; width: 100%; }
+    .eye-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #9ca3af; padding: 2px; display: flex; align-items: center; }
+    .eye-btn:hover { color: #16a34a; }
+    /* optional field label note */
+    .opt-note { font-size: 10px; color: #9ca3af; font-weight: 400; margin-left: 4px; }
+</style>
+
+<div class="pg">
+
+    <nav class="nav">
+        <a class="brand" href="/">
+            <div class="bico">
+                <svg width="16" height="16" fill="white" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </div>
+            Neki<em>Connect</em>
+        </a>
+        <div class="nlinks">
+            <a href="/campaigns">Campaigns</a>
+            <a href="/fundraisings">Fundraising</a>
+            <a href="/blogs">Blogs</a>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+            <button class="btn-login" @onclick='() => Navigation.NavigateTo("/login")'>Login</button>
+            <button class="btn-regnav">Register</button>
+        </div>
+    </nav>
+
+    <div class="page-body">
+        <div class="pico">
+            <svg width="24" height="24" fill="white" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+        </div>
+        <h1 class="ptitle">Create Account</h1>
+        <p class="psub">Join NekiConnect and start making a difference</p>
+
+        <div class="card">
+
+            @if (!string.IsNullOrEmpty(SuccessMessage))
+            {
+                <div class="alert-suc">&#10003; @SuccessMessage</div>
+            }
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert-err">&#9888; @ErrorMessage
+                    @if (IsDuplicateEmail)
+                    {
+                        <a href="/login" style="color:#dc2626;font-weight:600;margin-left:4px">Sign in?</a>
+                    }
+                </div>
+            }
+
+            <p class="rl">Register as</p>
+            <div class="tabs">
+                <button type="button"
+                        class="tab-btn @(ActiveTab == "donor" ? "active" : "")"
+                        @onclick='() => SwitchTab("donor")'>
+                    Donor / Volunteer
+                </button>
+                <button type="button"
+                        class="tab-btn @(ActiveTab == "ngo" ? "active" : "")"
+                        @onclick='() => SwitchTab("ngo")'>
+                    NGO Organisation
+                </button>
+            </div>
+
+            <!-- ═══ DONOR FORM ═══ -->
+            @if (ActiveTab == "donor")
+            {
+                <EditForm Model="DonorModel" OnValidSubmit="HandleDonorSubmit">
+                    <DataAnnotationsValidator />
+
+                    <div class="fg">
+                        <label>Full Name</label>
+                        <InputText class="@GetFieldClass(DonorModel.FullName, 3)"
+                                   @bind-Value="DonorModel.FullName"
+                                   placeholder="Ahmed Khan" />
+                        <ValidationMessage For="() => DonorModel.FullName" class="field-err" />
+                    </div>
+
+                    <div class="frow">
+                        <div class="fg" style="margin-bottom:0">
+                            <label>Email Address</label>
+                            <InputText class="@GetEmailClass(DonorModel.Email)"
+                                       @bind-Value="DonorModel.Email"
+                                       placeholder="you@example.com" />
+                            <ValidationMessage For="() => DonorModel.Email" class="field-err" />
+                        </div>
+                        <div class="fg" style="margin-bottom:0">
+                            <label>
+                                Phone Number
+                                <span class="opt-note">(optional)</span>
+                            </label>
+                            <InputText class="@GetDonorPhoneClass(DonorModel.Phone)"
+                                       @bind-Value="DonorModel.Phone"
+                                       placeholder="Any format" />
+                            <ValidationMessage For="() => DonorModel.Phone" class="field-err" />
+                        </div>
+                    </div>
+
+                    <div class="fg" style="margin-top:13px">
+                        <label>City</label>
+                        <InputText class="@GetFieldClass(DonorModel.City, 2)"
+                                   @bind-Value="DonorModel.City"
+                                   placeholder="Islamabad" />
+                        <ValidationMessage For="() => DonorModel.City" class="field-err" />
+                    </div>
+
+                    <div class="fg">
+                        <label>Password</label>
+                        <div class="pwd-wrap">
+                            <InputText type="@(ShowDonorPwd ? "text" : "password")"
+                                       class="@GetPasswordClass(DonorModel.Password)"
+                                       @bind-Value="DonorModel.Password"
+                                       placeholder="Create a strong password" />
+                            <button type="button" class="eye-btn" @onclick="() => ShowDonorPwd = !ShowDonorPwd">
+                                @if (ShowDonorPwd)
+                                {
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                                        <line x1="1" y1="1" x2="23" y2="23"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                }
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pwd-rules">
+                        <span class="rule @(HasLength(DonorModel.Password) ? "met" : "")">
+                            <span class="rule-dot"></span>8+ chars
+                        </span>
+                        <span class="rule @(HasUpper(DonorModel.Password) ? "met" : "")">
+                            <span class="rule-dot"></span>Uppercase
+                        </span>
+                        <span class="rule @(HasLower(DonorModel.Password) ? "met" : "")">
+                            <span class="rule-dot"></span>Lowercase
+                        </span>
+                        <span class="rule @(HasNumber(DonorModel.Password) ? "met" : "")">
+                            <span class="rule-dot"></span>Number
+                        </span>
+                        <span class="rule @(HasSpecial(DonorModel.Password) ? "met" : "")">
+                            <span class="rule-dot"></span>Special char
+                        </span>
+                    </div>
+                    <ValidationMessage For="() => DonorModel.Password" class="field-err" />
+
+                    <div class="fg">
+                        <label>Confirm Password</label>
+                        <div class="pwd-wrap">
+                            <InputText type="@(ShowDonorConf ? "text" : "password")"
+                                       class="@GetConfirmClass(DonorModel.Password, DonorModel.ConfirmPassword)"
+                                       @bind-Value="DonorModel.ConfirmPassword"
+                                       placeholder="Repeat your password" />
+                            <button type="button" class="eye-btn" @onclick="() => ShowDonorConf = !ShowDonorConf">
+                                @if (ShowDonorConf)
+                                {
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                                        <line x1="1" y1="1" x2="23" y2="23"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                }
+                            </button>
+                        </div>
+                        <ValidationMessage For="() => DonorModel.ConfirmPassword" class="field-err" />
+                    </div>
+
+                    <div class="trow">
+                        <InputCheckbox @bind-Value="DonorModel.AgreeTerms" id="d-terms" />
+                        <label for="d-terms">
+                            I agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.
+                        </label>
+                    </div>
+                    <ValidationMessage For="() => DonorModel.AgreeTerms" class="field-err" />
+
+                    <button type="submit" class="submit-btn" disabled="@IsSubmitting">
+                        @if (IsSubmitting) { <span>Creating account...</span> }
+                        else { <span>Create Donor Account &#8594;</span> }
+                    </button>
+                    <p class="slink">Already have an account? <a href="/login">Sign In</a></p>
+                </EditForm>
+            }
+
+            <!-- ═══ NGO FORM ═══ -->
+            @if (ActiveTab == "ngo")
+            {
+                <div class="info-box">
+                    &#8505; NGO registrations are reviewed by our admin team. You'll be notified within 2–3 business days upon approval.
+                </div>
+
+                <EditForm Model="NgoModel" OnValidSubmit="HandleNgoSubmit">
+                    <DataAnnotationsValidator />
+
+                    <div class="fg">
+                        <label>NGO Name</label>
+                        <InputText class="@GetFieldClass(NgoModel.NgoName, 3)"
+                                   @bind-Value="NgoModel.NgoName"
+                                   placeholder="e.g. Welfare Trust of Pakistan" />
+                        <ValidationMessage For="() => NgoModel.NgoName" class="field-err" />
+                    </div>
+
+                    <div class="frow">
+                        <div class="fg" style="margin-bottom:0">
+                            <label>Contact Email</label>
+                            <InputText class="@GetEmailClass(NgoModel.Email)"
+                                       @bind-Value="NgoModel.Email"
+                                       placeholder="info@yourNGO.org" />
+                            <ValidationMessage For="() => NgoModel.Email" class="field-err" />
+                        </div>
+                        <div class="fg" style="margin-bottom:0">
+                            <label>Phone Number</label>
+                            <InputText class="@GetNgoPhoneClass(NgoModel.Phone)"
+                                       @bind-Value="NgoModel.Phone"
+                                       placeholder="e.g. 0519201234 or 03001234567" />
+                            <ValidationMessage For="() => NgoModel.Phone" class="field-err" />
+                        </div>
+                    </div>
+
+                    <div class="frow" style="margin-top:13px">
+                        <div class="fg" style="margin-bottom:0">
+                            <label>City</label>
+                            <InputText class="@GetFieldClass(NgoModel.City, 2)"
+                                       @bind-Value="NgoModel.City"
+                                       placeholder="Karachi" />
+                            <ValidationMessage For="() => NgoModel.City" class="field-err" />
+                        </div>
+                        <div class="fg" style="margin-bottom:0">
+                            <label>Category</label>
+                            <InputSelect @bind-Value="NgoModel.Category"
+                                         style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;color:#111;background:#fff;">
+                                <option value="">Select category</option>
+                                <option value="All">All</option>
+                                <option>Education</option>
+                                <option>Health / Medical</option>
+                                <option>Food &amp; Nutrition</option>
+                                <option>Disaster Relief</option>
+                                <option>Women Empowerment</option>
+                                <option>Child Welfare</option>
+                                <option>Environment</option>
+                                <option>Other</option>
+                            </InputSelect>
+                            <ValidationMessage For="() => NgoModel.Category" class="field-err" />
+                        </div>
+                    </div>
+
+                    <div class="fg" style="margin-top:13px">
+                        <label>Registration Number</label>
+                        <InputText class="@GetFieldClass(NgoModel.RegistrationNumber, 1)"
+                                   @bind-Value="NgoModel.RegistrationNumber"
+                                   placeholder="e.g. NGO-12345" />
+                        <ValidationMessage For="() => NgoModel.RegistrationNumber" class="field-err" />
+                    </div>
+
+                    <div class="fg">
+                        <label>Password</label>
+                        <div class="pwd-wrap">
+                            <InputText type="@(ShowNgoPwd ? "text" : "password")"
+                                       class="@GetPasswordClass(NgoModel.Password)"
+                                       @bind-Value="NgoModel.Password"
+                                       placeholder="Create a strong password" />
+                            <button type="button" class="eye-btn" @onclick="() => ShowNgoPwd = !ShowNgoPwd">
+                                @if (ShowNgoPwd)
+                                {
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                                        <line x1="1" y1="1" x2="23" y2="23"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                }
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pwd-rules">
+                        <span class="rule @(HasLength(NgoModel.Password) ? "met" : "")">
+                            <span class="rule-dot"></span>8+ chars
+                        </span>
+                        <span class="rule @(HasUpper(NgoModel.Password) ? "met" : "")">
+                            <span class="rule-dot"></span>Uppercase
+                        </span>
+                        <span class="rule @(HasLower(NgoModel.Password) ? "met" : "")">
+                            <span class="rule-dot"></span>Lowercase
+                        </span>
+                        <span class="rule @(HasNumber(NgoModel.Password) ? "met" : "")">
+                            <span class="rule-dot"></span>Number
+                        </span>
+                        <span class="rule @(HasSpecial(NgoModel.Password) ? "met" : "")">
+                            <span class="rule-dot"></span>Special char
+                        </span>
+                    </div>
+                    <ValidationMessage For="() => NgoModel.Password" class="field-err" />
+
+                    <div class="fg">
+                        <label>Confirm Password</label>
+                        <div class="pwd-wrap">
+                            <InputText type="@(ShowNgoConf ? "text" : "password")"
+                                       class="@GetConfirmClass(NgoModel.Password, NgoModel.ConfirmPassword)"
+                                       @bind-Value="NgoModel.ConfirmPassword"
+                                       placeholder="Repeat your password" />
+                            <button type="button" class="eye-btn" @onclick="() => ShowNgoConf = !ShowNgoConf">
+                                @if (ShowNgoConf)
+                                {
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                                        <line x1="1" y1="1" x2="23" y2="23"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                }
+                            </button>
+                        </div>
+                        <ValidationMessage For="() => NgoModel.ConfirmPassword" class="field-err" />
+                    </div>
+
+                    <div class="trow">
+                        <InputCheckbox @bind-Value="NgoModel.AgreeTerms" id="n-terms" />
+                        <label for="n-terms">
+                            I agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.
+                            I confirm this NGO is a legally registered organisation in Pakistan.
+                        </label>
+                    </div>
+                    <ValidationMessage For="() => NgoModel.AgreeTerms" class="field-err" />
+
+                    <button type="submit" class="submit-btn" disabled="@IsSubmitting">
+                        @if (IsSubmitting) { <span>Submitting...</span> }
+                        else { <span>Submit NGO Registration &#8594;</span> }
+                    </button>
+                    <p class="slink">Already have an account? <a href="/login">Sign In</a></p>
+                </EditForm>
+            }
+
+        </div>
+    </div>
+</div>
+
+@code {
+
+    // ── Tab state ─────────────────────────────────────────────────────────────
+    private string ActiveTab = "donor";
+
+    private void SwitchTab(string tab)
+    {
+        ActiveTab = tab;
+        ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
+        IsDuplicateEmail = false;
+    }
+
+    // ── Shared UI state ───────────────────────────────────────────────────────
+    private bool IsSubmitting    = false;
+    private string ErrorMessage  = string.Empty;
+    private string SuccessMessage = string.Empty;
+    private bool IsDuplicateEmail = false;
+
+    // ── Eye toggle states (one per password field) ────────────────────────────
+    private bool ShowDonorPwd  = false;
+    private bool ShowDonorConf = false;
+    private bool ShowNgoPwd    = false;
+    private bool ShowNgoConf   = false;
+
+    // ── Form models ───────────────────────────────────────────────────────────
+    private DonorInputModel DonorModel = new();
+    private NgoInputModel   NgoModel   = new();
+
+    // ── Donor submit ──────────────────────────────────────────────────────────
+    private async Task HandleDonorSubmit()
+    {
+        IsSubmitting    = true;
+        ErrorMessage    = string.Empty;
+        SuccessMessage  = string.Empty;
+        IsDuplicateEmail = false;
+
+        var existing = await UserManager.FindByEmailAsync(DonorModel.Email.Trim().ToLower());
+        if (existing != null)
+        {
+            ErrorMessage     = "This email is already registered.";
+            IsDuplicateEmail = true;
+            IsSubmitting     = false;
+            return;
+        }
+
+        var user = new ApplicationUser
+        {
+            FullName    = DonorModel.FullName.Trim(),
+            UserName    = DonorModel.Email.Trim().ToLower(),
+            Email       = DonorModel.Email.Trim().ToLower(),
+            PhoneNumber = DonorModel.Phone?.Trim() ?? string.Empty,
+            Role        = "Donor",
+            CreatedAt   = DateTime.UtcNow
+        };
+
+        var result = await UserManager.CreateAsync(user, DonorModel.Password);
+
+        if (result.Succeeded)
+        {
+            await UserManager.AddToRoleAsync(user, "Donor");
+            SuccessMessage = "Account created successfully! You can now login below.";
+            // No redirect - stay on page
+            // Clear the form (optional - see below)
+            DonorModel = new DonorInputModel();
+        }
+        else
+        {
+            var err = result.Errors.FirstOrDefault();
+            if (err?.Code is "DuplicateUserName" or "DuplicateEmail")
+            { ErrorMessage = "This email is already registered."; IsDuplicateEmail = true; }
+            else
+            { ErrorMessage = err?.Description ?? "Registration failed. Please try again."; }
+        }
+
+        IsSubmitting = false;
+    }
+
+    // ── NGO submit ────────────────────────────────────────────────────────────
+    private async Task HandleNgoSubmit()
+    {
+        IsSubmitting     = true;
+        ErrorMessage     = string.Empty;
+        SuccessMessage   = string.Empty;
+        IsDuplicateEmail = false;
+
+        var existing = await UserManager.FindByEmailAsync(NgoModel.Email.Trim().ToLower());
+        if (existing != null)
+        {
+            ErrorMessage     = "This email is already registered.";
+            IsDuplicateEmail = true;
+            IsSubmitting     = false;
+            return;
+        }
+
+        var user = new ApplicationUser
+        {
+            FullName    = NgoModel.NgoName.Trim(),
+            UserName    = NgoModel.Email.Trim().ToLower(),
+            Email       = NgoModel.Email.Trim().ToLower(),
+            PhoneNumber = NgoModel.Phone.Trim(),
+            Role        = "NGO",
+            CreatedAt   = DateTime.UtcNow
+        };
+
+        var result = await UserManager.CreateAsync(user, NgoModel.Password);
+
+        if (result.Succeeded)
+        {
+            await UserManager.AddToRoleAsync(user, "NGO");
+
+            var ngo = new NGO
+            {
+                UserId             = user.Id,
+                Name               = NgoModel.NgoName.Trim(),
+                Mission            = string.Empty,
+                City               = NgoModel.City.Trim(),
+                Category           = NgoModel.Category.Trim(),
+                RegistrationNumber = NgoModel.RegistrationNumber.Trim(),
+                ContactEmail       = NgoModel.Email.Trim().ToLower(),
+                ContactPhone       = NgoModel.Phone.Trim(),
+                Status             = "Pending",
+                CreatedAt          = DateTime.UtcNow
+            };
+            await NgoService.RegisterNGOAsync(ngo);
+
+            SuccessMessage = "NGO registration submitted! Our admin team will review and notify you within 2-3 business days.";
+        }
+        else
+        {
+            var err = result.Errors.FirstOrDefault();
+            if (err?.Code is "DuplicateUserName" or "DuplicateEmail")
+            { ErrorMessage = "This email is already registered."; IsDuplicateEmail = true; }
+            else
+            { ErrorMessage = err?.Description ?? "Registration failed. Please try again."; }
+        }
+
+        IsSubmitting = false;
+    }
+
+    // ── CSS helpers ───────────────────────────────────────────────────────────
+    private string GetFieldClass(string? val, int minLen) =>
+        string.IsNullOrEmpty(val) ? "" : val.Trim().Length >= minLen ? "valid" : "invalid";
+
+    // Email: must contain @ AND a dot AFTER the @ with at least 2 chars after it
+    private string GetEmailClass(string? val)
+    {
+        if (string.IsNullOrEmpty(val)) return "";
+        var v = val.Trim();
+        var atIndex = v.IndexOf('@');
+        if (atIndex < 1) return "invalid";
+        var domain = v.Substring(atIndex + 1);
+        var dotIndex = domain.LastIndexOf('.');
+        if (dotIndex < 1 || domain.Length - dotIndex < 3) return "invalid";
+        return "valid";
+    }
+
+    // Donor phone: optional — if filled must be at least 7 digits
+    private string GetDonorPhoneClass(string? val)
+    {
+        if (string.IsNullOrEmpty(val)) return "";
+        var digits = new string(val.Where(char.IsDigit).ToArray());
+        return digits.Length >= 7 ? "valid" : "invalid";
+    }
+
+    // NGO phone: required — 7 to 15 digits (covers landlines + mobiles worldwide)
+    private string GetNgoPhoneClass(string? val)
+    {
+        if (string.IsNullOrEmpty(val)) return "";
+        var digits = new string(val.Where(char.IsDigit).ToArray());
+        return digits.Length >= 7 && digits.Length <= 15 ? "valid" : "invalid";
+    }
+
+    private string GetPasswordClass(string? val) =>
+        string.IsNullOrEmpty(val) ? "" : IsStrongPassword(val) ? "valid" : "invalid";
+
+    private string GetConfirmClass(string? pwd, string? conf) =>
+        string.IsNullOrEmpty(conf) ? "" : pwd == conf ? "valid" : "invalid";
+
+    // ── Password rule helpers ─────────────────────────────────────────────────
+    private bool HasLength(string? v)  => !string.IsNullOrEmpty(v) && v.Length >= 8;
+    private bool HasUpper(string? v)   => !string.IsNullOrEmpty(v) && v.Any(char.IsUpper);
+    private bool HasLower(string? v)   => !string.IsNullOrEmpty(v) && v.Any(char.IsLower);
+    private bool HasNumber(string? v)  => !string.IsNullOrEmpty(v) && v.Any(char.IsDigit);
+    private bool HasSpecial(string? v) => !string.IsNullOrEmpty(v) && v.Any(c => !char.IsLetterOrDigit(c));
+    private bool IsStrongPassword(string? v) =>
+        HasLength(v) && HasUpper(v) && HasLower(v) && HasNumber(v) && HasSpecial(v);
+
+    // ── Input Models ──────────────────────────────────────────────────────────
+
+    public class DonorInputModel
+    {
+        [Required(ErrorMessage = "Full name is required")]
+        [MinLength(3, ErrorMessage = "At least 3 characters required")]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required")]
+        [RegularExpression(
+            @"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$",
+            ErrorMessage = "Must include @ and a valid domain e.g. .com .pk .org")]
+        public string Email { get; set; } = string.Empty;
+
+        // Optional for donors — they can be from any country
+        [RegularExpression(
+            @"^$|^\+?[\d\s\-\(\)]{7,15}$",
+            ErrorMessage = "Enter a valid phone number (at least 7 digits)")]
+        public string? Phone { get; set; }
+
+        [Required(ErrorMessage = "City is required")]
+        [MinLength(2, ErrorMessage = "Enter a valid city name")]
+        public string City { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required")]
+        [RegularExpression(
+            @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$",
+            ErrorMessage = "Must be 8+ chars with uppercase, lowercase, number and special character")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Please confirm your password")]
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+
+        [Range(typeof(bool), "true", "true", ErrorMessage = "You must agree to the terms")]
+        public bool AgreeTerms { get; set; } = false;
+    }
+
+    public class NgoInputModel
+    {
+        [Required(ErrorMessage = "NGO name is required")]
+        [MinLength(3, ErrorMessage = "At least 3 characters required")]
+        public string NgoName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required")]
+        [RegularExpression(
+            @"^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$",
+            ErrorMessage = "Must include @ and a valid domain e.g. .com .pk .org")]
+        public string Email { get; set; } = string.Empty;
+
+        // NGO phone: required, accepts landlines (7 digits) and mobiles (up to 15)
+        [Required(ErrorMessage = "Phone number is required")]
+        [RegularExpression(
+            @"^\+?[\d\s\-\(\)]{7,15}$",
+            ErrorMessage = "Enter a valid number (7–15 digits, landline or mobile)")]
+        public string Phone { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "City is required")]
+        [MinLength(2, ErrorMessage = "Enter a valid city name")]
+        public string City { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Please select a category")]
+        public string Category { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Registration number is required")]
+        public string RegistrationNumber { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required")]
+        [RegularExpression(
+            @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$",
+            ErrorMessage = "Must be 8+ chars with uppercase, lowercase, number and special character")]
+        public string Password { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Please confirm your password")]
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+
+        [Range(typeof(bool), "true", "true", ErrorMessage = "You must agree to the terms")]
+        public bool AgreeTerms { get; set; } = false;
+    }
+}
