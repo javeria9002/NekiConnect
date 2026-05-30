@@ -63,7 +63,7 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<UserService>();
 //builder.Services.AddScoped<AdminService>();
 //builder.Services.AddScoped<NotificationService>();
-//builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AuthService>();
 
 // ── JWT ──
 builder.Services.AddScoped<TokenService>();
