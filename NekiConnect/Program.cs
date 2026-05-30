@@ -53,7 +53,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddCascadingAuthenticationState();
 
 // ── Services (uncomment as you rebuild each file) ──
-//builder.Services.AddScoped<NGOService>();
+builder.Services.AddScoped<NGOService>();
 //builder.Services.AddScoped<FundraisingService>();
 //builder.Services.AddScoped<CampaignService>();
 //builder.Services.AddScoped<DonationService>();
