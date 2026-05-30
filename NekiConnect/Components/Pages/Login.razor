@@ -1,0 +1,157 @@
+﻿@page "/login"
+@inject NavigationManager Navigation
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@rendermode InteractiveServer
+
+<PageTitle>Sign In — NekiConnect</PageTitle>
+
+<Navbar />
+
+<div class="pg">
+    <div class="page-body">
+        <div class="pico">
+            <svg width="26" height="26" fill="white" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+        </div>
+        <h1 class="ptitle">Welcome back</h1>
+        <p class="psub">Sign in to your NekiConnect account</p>
+
+        <div class="card">
+
+            @if (!string.IsNullOrEmpty(errorMsg))
+            {
+                <div class="alert-err">⚠ @errorMsg</div>
+            }
+
+            @if (!string.IsNullOrEmpty(returnUrl) && string.IsNullOrEmpty(errorMsg))
+            {
+                <div class="portal-hint">🔒 Please sign in to access the <strong>@PortalName</strong>.</div>
+            }
+
+            @if (ActiveTab == "admin")
+            {
+                <div class="admin-hint">🔒 Admin portal — restricted access only.</div>
+            }
+
+            <p class="rl">Login as</p>
+            <div class="tabs">
+                <button type="button" class="tab-btn @(ActiveTab == "donor" ? "active" : "")" @onclick='() => SwitchTab("donor")'>Donor</button>
+                <button type="button" class="tab-btn @(ActiveTab == "ngo" ? "active" : "")" @onclick='() => SwitchTab("ngo")'>NGO</button>
+                <button type="button" class="tab-btn @(ActiveTab == "admin" ? "active" : "")" @onclick='() => SwitchTab("admin")'>Admin</button>
+            </div>
+
+            <form method="post" action="/account/login">
+                <input type="hidden" name="__RequestVerificationToken" value="@antiforgeryToken" />
+                <input type="hidden" name="Role" value="@RoleValue" />
+                <input type="hidden" name="ReturnUrl" value="@returnUrl" />
+
+                <div class="fg">
+                    <label>Email Address</label>
+                    <input type="email" name="Email" placeholder="you@example.com"
+                    autocomplete="off"
+                           @bind="email" @bind:event="oninput" required />
+                </div>
+
+                <div class="fg">
+                    <label>Password</label>
+                    <div class="pwd-wrap">
+                        <input type="@(showPwd ? "text" : "password")"
+                               name="Password"
+                               placeholder="Enter your password"
+                               autocomplete="new-password"
+                               @bind="password"
+                               @bind:event="oninput"
+                               required />
+                        <button type="button" class="eye-btn"@onclick="() => showPwd = !showPwd">
+                            @if (showPwd)
+                            {
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                                    <line x1="1" y1="1" x2="23" y2="23" />
+                                </svg>
+                            }
+                            else
+                            {
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            }
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">Sign In →</button>
+            </form>
+
+            @if (ActiveTab != "admin")
+            {
+                <p class="slink">Don't have an account? <a href="/register">Register</a></p>
+            }
+        </div>
+
+        <p class="ssl-note">🔒 Secured with 256-bit SSL encryption</p>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] private string? error { get; set; }
+    [SupplyParameterFromQuery] private string? tab { get; set; }
+    [SupplyParameterFromQuery] private string? returnUrl { get; set; }
+
+    private string ActiveTab = "donor";
+    private string email = string.Empty;
+    private string password = string.Empty;
+    private bool showPwd = false;
+    private string antiforgeryToken = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrEmpty(tab))
+            ActiveTab = tab.ToLower() switch
+            {
+                "ngo" => "ngo",
+                "admin" => "admin",
+                _ => "donor"
+            };
+
+        var ctx = HttpContextAccessor.HttpContext;
+        if (ctx != null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(ctx);
+            antiforgeryToken = tokens.RequestToken ?? string.Empty;
+        }
+    }
+
+    private string PortalName => returnUrl switch
+    {
+        "/ngo/dashboard" => "NGO Dashboard",
+        "/donor/dashboard" => "Donor Dashboard",
+        "/admin/dashboard" => "Admin Panel",
+        _ => "portal"
+    };
+
+    private string RoleValue => ActiveTab == "donor" ? "Donor"
+                              : ActiveTab == "ngo" ? "NGO"
+                              : "Admin";
+
+    private string errorMsg => error switch
+    {
+        "invalid" => "No account found with this email.",
+        "wrongtab" => "Wrong login tab — please select the correct role.",
+        "suspended" => "Your account has been suspended. Contact support.",
+        "wrongpassword" => "Incorrect password. Please try again.",
+        _ => string.Empty
+    };
+
+    private void SwitchTab(string t)
+    {
+        ActiveTab = t;
+        email = string.Empty;
+        password = string.Empty;
+        showPwd = false;
+    }
+}
