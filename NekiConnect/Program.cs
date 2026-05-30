@@ -4,9 +4,6 @@ using NekiConnect.Components;
 using NekiConnect.Data;
 using NekiConnect.Models;
 using NekiConnect.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,50 +22,35 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// ── JWT Bearer authentication (for API endpoints only) ──
-builder.Services.AddAuthentication()
-    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
-        };
-    });
-
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 
-// ── ADDED: required for the Razor Page login handler ──
+// Required for Razor Page login handler
 builder.Services.AddRazorPages();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddCascadingAuthenticationState();
 
-// All services
-builder.Services.AddScoped<NGOService>();
-builder.Services.AddScoped<FundraisingService>();
-builder.Services.AddScoped<CampaignService>();
-builder.Services.AddScoped<DonationService>();
-builder.Services.AddScoped<VolunteerService>();
-builder.Services.AddScoped<BlogService>();
-builder.Services.AddScoped<BeneficiaryService>();
+// ── Services (uncomment as you rebuild each file) ──
+//builder.Services.AddScoped<NGOService>();
+//builder.Services.AddScoped<FundraisingService>();
+//builder.Services.AddScoped<CampaignService>();
+//builder.Services.AddScoped<DonationService>();
+//builder.Services.AddScoped<VolunteerService>();
+//builder.Services.AddScoped<BlogService>();
+//builder.Services.AddScoped<BeneficiaryService>();
 builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<AdminService>();
-builder.Services.AddScoped<NotificationService>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<TokenService>();
+//builder.Services.AddScoped<AdminService>();
+//builder.Services.AddScoped<NotificationService>();
+//builder.Services.AddScoped<AuthService>();
+
+// ── Email (Brevo) ──
+builder.Services.AddScoped<EmailService>();
 
 var app = builder.Build();
 
-// Seed roles + hardcoded admin on startup
+// Seed roles + admin on startup
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -111,8 +93,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// ── ADDED: maps the Razor Page login handler ──
 app.MapRazorPages();
 
 app.MapRazorComponents<App>()
