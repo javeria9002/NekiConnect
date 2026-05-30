@@ -1,33 +1,41 @@
-﻿namespace NekiConnect.Models
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace NekiConnect.Models
 {
-    // One row per volunteer application.
-    // Volunteers apply to Campaigns (not Fundraisings — those are money-only).
+    [Table("VolunteerApplications")]
     public class VolunteerApplication
     {
+        [Key]
         public int Id { get; set; }
 
-        // FK → ApplicationUser (the volunteer/donor)
+        [Required]
         public string UserId { get; set; } = string.Empty;
 
-        // FK → Campaign
+        [Required]
         public int CampaignId { get; set; }
 
-        // e.g. "teaching, first aid, driving"
+        [StringLength(300)]
         public string Skills { get; set; } = string.Empty;
 
-        // e.g. "weekends only", "full day on Dec 15"
+        [StringLength(300)]
         public string Availability { get; set; } = string.Empty;
 
         // "Pending", "Accepted", "Rejected"
+        [Required]
+        [StringLength(20)]
         public string Status { get; set; } = "Pending";
 
-        // NGO marks this true after the campaign is completed
         public bool Attended { get; set; } = false;
 
+        [Required]
         public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation properties
+        // Navigation
+        [ForeignKey(nameof(UserId))]
         public ApplicationUser? User { get; set; }
+
+        [ForeignKey(nameof(CampaignId))]
         public Campaign? Campaign { get; set; }
     }
 }
