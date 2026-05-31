@@ -1,0 +1,135 @@
+﻿@page "/admin/donations"
+@layout AdminLayout
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject AdminService AdminService
+
+<Navbar/>
+
+<div class="dn-page">
+
+    <h1 class="dn-title">All Donations</h1>
+    <p class="dn-sub">Complete transaction log of all donations on the platform.</p>
+
+    <!-- Stat cards -->
+    <div class="stat-row">
+        <div class="stat-card"><div class="stat-num dark">@donations.Count</div><div class="stat-lbl">Total Transactions</div></div>
+        <div class="stat-card"><div class="stat-num green">PKR @FormatMoney(totalRaised)</div><div class="stat-lbl">Total Raised</div></div>
+        <div class="stat-card"><div class="stat-num blue">PKR @FormatMoney(avgDonation)</div><div class="stat-lbl">Avg. Donation</div></div>
+        <div class="stat-card"><div class="stat-num purple">PKR @FormatMoney(thisMonth)</div><div class="stat-lbl">This Month</div></div>
+    </div>
+
+    <!-- Search + filters + export -->
+    <div class="filter-bar">
+        <div class="search-wrap">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+            <input class="search-inp" placeholder="Search donor or campaign..." @bind="search" @bind:event="oninput" />
+        </div>
+        <div class="filter-btns">
+            @foreach (var f in new[] { "All", "JazzCash", "EasyPaisa", "Bank Transfer", "Stripe" })
+            {
+                <button class="fbtn @(filter == f ? "active" : "")" @onclick="() => filter = f">@f</button>
+            }
+        </div>
+        <a class="export-btn" href="/export/donations">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+            Export
+        </a>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+        @if (Filtered.Count == 0)
+        {
+            <div class="empty">No donations found.</div>
+        }
+        else
+        {
+            <table class="dn-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>DONOR</th>
+                        <th>CAMPAIGN</th>
+                        <th>NGO</th>
+                        <th class="ta-right">AMOUNT</th>
+                        <th>METHOD</th>
+                        <th class="ta-right">DATE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int i = 1;
+                    }
+                    @foreach (var d in Filtered)
+                    {
+                        <tr>
+                            <td class="dn-idx">@i</td>
+                            <td>
+                                <div class="dn-donor">
+                                    <span class="dn-avatar">@Initial(d.Donor?.FullName)</span>
+                                    @(d.Donor?.FullName ?? "Unknown")
+                                </div>
+                            </td>
+                            <td>@(d.Campaign?.Title ?? "—")</td>
+                            <td class="dn-ngo">@(d.Campaign?.NGO?.Name ?? "—")</td>
+                            <td class="ta-right dn-amount">PKR @d.Amount.ToString("N0")</td>
+                            <td><span class="method-badge @MethodClass(d.PaymentMethod)">@d.PaymentMethod</span></td>
+                            <td class="ta-right dn-date">@d.DonatedAt.ToString("MMM d, yyyy")</td>
+                        </tr>
+                        i++;
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td colspan="4">Total (@Filtered.Count transactions)</td>
+                        <td class="ta-right">PKR @Filtered.Sum(d => d.Amount).ToString("N0")</td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Donation> donations = new();
+    private string filter = "All";
+    private string search = "";
+
+    private decimal totalRaised => donations.Sum(d => d.Amount);
+    private decimal avgDonation => donations.Count == 0 ? 0 : donations.Average(d => d.Amount);
+    private decimal thisMonth => donations
+        .Where(d => d.DonatedAt.Year == DateTime.Today.Year && d.DonatedAt.Month == DateTime.Today.Month)
+        .Sum(d => d.Amount);
+
+    private List<Donation> Filtered =>
+        donations.Where(d => filter == "All" || d.PaymentMethod == filter)
+                 .Where(d => string.IsNullOrWhiteSpace(search)
+                          || (d.Donor?.FullName ?? "").Contains(search, StringComparison.OrdinalIgnoreCase)
+                          || (d.Campaign?.Title ?? "").Contains(search, StringComparison.OrdinalIgnoreCase))
+                 .ToList();
+
+    protected override async Task OnInitializedAsync()
+        => donations = await AdminService.GetAllDonationsAsync();
+
+    private static string MethodClass(string? m) => m switch
+    {
+        "JazzCash" => "m-jazz",
+        "EasyPaisa" => "m-easy",
+        "Bank Transfer" => "m-bank",
+        "Stripe" => "m-stripe",
+        _ => "m-other"
+    };
+
+    private static string Initial(string? name) =>
+        string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1).ToUpper();
+
+    private static string FormatMoney(decimal v)
+    {
+        if (v >= 1_000_000_000) return (v / 1_000_000_000m).ToString("0.#") + "B";
+        if (v >= 1_000_000) return (v / 1_000_000m).ToString("0.#") + "M";
+        if (v >= 1_000) return (v / 1_000m).ToString("0.#") + "K";
+        return v.ToString("N0");
+    }
+}

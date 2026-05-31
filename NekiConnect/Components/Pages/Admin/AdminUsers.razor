@@ -1,0 +1,176 @@
+﻿@page "/admin/users"
+@layout AdminLayout
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject AdminService AdminService
+@inject UserService UserService
+
+<Navbar/>
+
+<div class="us-page">
+
+    <h1 class="us-title">All Users</h1>
+    <p class="us-sub">View and manage all registered users on the platform.</p>
+
+    <!-- Stat cards -->
+    <div class="stat-row">
+        <div class="stat-card"><div class="stat-num dark">@rows.Count</div><div class="stat-lbl">Total Users</div></div>
+        <div class="stat-card"><div class="stat-num green">@donorCount</div><div class="stat-lbl">Donors</div></div>
+        <div class="stat-card"><div class="stat-num blue">@volunteerCount</div><div class="stat-lbl">Volunteers</div></div>
+        <div class="stat-card"><div class="stat-num red">@suspendedCount</div><div class="stat-lbl">Suspended</div></div>
+    </div>
+
+    <!-- Search + filters + export -->
+    <div class="filter-bar">
+        <div class="search-wrap">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+            <input class="search-inp" placeholder="Search by name or email..." @bind="search" @bind:event="oninput" />
+        </div>
+        <div class="filter-btns">
+            @foreach (var f in new[] { "All", "Donor", "Volunteer", "NGO Admin" })
+            {
+                <button class="fbtn @(filter == f ? "active" : "")" @onclick="() => filter = f">@f</button>
+            }
+        </div>
+        <a class="export-btn" href="/export/users">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+            Export
+        </a>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+        @if (Filtered.Count == 0)
+        {
+            <div class="empty">No users found.</div>
+        }
+        else
+        {
+            <table class="us-table">
+                <thead>
+                    <tr>
+                        <th>USER</th>
+                        <th>TYPE</th>
+                        <th>JOINED</th>
+                        <th class="ta-right">TOTAL DONATED</th>
+                        <th>STATUS</th>
+                        <th class="ta-right">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Filtered)
+                    {
+                        var type = UserType(r);
+                        <tr>
+                            <td>
+                                <div class="us-user">
+                                    <span class="us-avatar">@Initial(r.User.FullName)</span>
+                                    <div>
+                                        <div class="us-name">@r.User.FullName</div>
+                                        <div class="us-email">@r.User.Email</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="type-badge @TypeClass(type)">@type</span></td>
+                            <td class="us-date">@r.User.CreatedAt.ToString("MMM d, yyyy")</td>
+                            <td class="ta-right us-donated">PKR @FormatMoney(r.TotalDonated)</td>
+                            <td><span class="status-badge @(r.User.IsSuspended ? "st-susp" : "st-active")">@(r.User.IsSuspended ? "Suspended" : "Active")</span></td>
+                            <td class="ta-right">
+                                <div class="row-actions">
+                                    <button class="act view" @onclick="() => ToggleView(r.User.Id)">
+                                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                        View
+                                    </button>
+                                    @if (r.User.Role != "Admin")
+                                    {
+                                        <button class="act del" @onclick="() => DeleteAsync(r.User.Id)">
+                                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /></svg>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                        @if (viewingId == r.User.Id)
+                        {
+                            <tr class="detail-row">
+                                <td colspan="6">
+                                    <div class="detail-box">
+                                        <div class="detail-info">
+                                            <span><b>Email:</b>@r.User.Email</span>
+                                            <span><b>Role:</b> @r.User.Role</span>
+                                            <span><b>Volunteered:</b> @(r.HasVolunteered ? "Yes" : "No")</span>
+                                        </div>
+                                        @if (r.User.Role != "Admin")
+                                        {
+                                            @if (r.User.IsSuspended)
+                                            {
+                                                <button class="btn-unsusp" @onclick="() => UnsuspendAsync(r.User.Id)">Unsuspend User</button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn-susp" @onclick="() => SuspendAsync(r.User.Id)">Suspend User</button>
+                                            }
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@code {
+    private List<UserOverview> rows = new();
+    private string filter = "All";
+    private string search = "";
+    private string viewingId = "";
+
+    private int donorCount => rows.Count(r => UserType(r) == "Donor");
+    private int volunteerCount => rows.Count(r => UserType(r) == "Volunteer");
+    private int suspendedCount => rows.Count(r => r.User.IsSuspended);
+
+    private List<UserOverview> Filtered =>
+        rows.Where(r => filter == "All" || UserType(r) == filter)
+            .Where(r => string.IsNullOrWhiteSpace(search)
+                     || (r.User.FullName ?? "").Contains(search, StringComparison.OrdinalIgnoreCase)
+                     || (r.User.Email ?? "").Contains(search, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync() => rows = await AdminService.GetUserOverviewAsync();
+
+    private void ToggleView(string id) => viewingId = viewingId == id ? "" : id;
+
+    private async Task SuspendAsync(string id) { await UserService.SuspendUserAsync(id); await LoadAsync(); }
+    private async Task UnsuspendAsync(string id) { await UserService.UnsuspendUserAsync(id); await LoadAsync(); }
+    private async Task DeleteAsync(string id) { await UserService.DeleteUserAsync(id); await LoadAsync(); }
+
+    private static string UserType(UserOverview r) => r.User.Role switch
+    {
+        "NGO" => "NGO Admin",
+        "Admin" => "Admin",
+        _ => r.HasVolunteered ? "Volunteer" : "Donor"
+    };
+
+    private static string TypeClass(string type) => type switch
+    {
+        "Donor" => "t-donor",
+        "Volunteer" => "t-vol",
+        "NGO Admin" => "t-ngo",
+        _ => "t-admin"
+    };
+
+    private static string Initial(string? name) =>
+        string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1).ToUpper();
+
+    private static string FormatMoney(decimal v)
+    {
+        if (v >= 1_000_000) return (v / 1_000_000m).ToString("0.#") + "M";
+        if (v >= 1_000) return (v / 1_000m).ToString("0.#") + "K";
+        return v.ToString("N0");
+    }
+}

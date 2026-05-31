@@ -1,0 +1,128 @@
+﻿@page "/admin/ngos"
+@layout AdminLayout
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject AdminService AdminService
+@inject NavigationManager Nav
+
+<div class="ng-page">
+
+    <h1 class="ng-title">All NGOs</h1>
+    <p class="ng-sub">View and manage all registered NGOs on the NekiConnect platform.</p>
+
+    <!-- Stat cards -->
+    <div class="stat-row">
+        <div class="stat-card"><div class="stat-num dark">@rows.Count</div><div class="stat-lbl">Total NGOs</div></div>
+        <div class="stat-card"><div class="stat-num green">@activeCount</div><div class="stat-lbl">Active</div></div>
+        <div class="stat-card"><div class="stat-num blue">@newCount</div><div class="stat-lbl">New (This Month)</div></div>
+        <div class="stat-card"><div class="stat-num purple">@totalCampaigns</div><div class="stat-lbl">Total Campaigns</div></div>
+    </div>
+
+    <!-- Search + export -->
+    <div class="filter-bar">
+        <div class="search-wrap">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+            <input class="search-inp" placeholder="Search NGO name or city..." @bind="search" @bind:event="oninput" />
+        </div>
+        <a class="export-btn" href="/export/ngos">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+            Export
+        </a>
+    </div>
+
+    <!-- NGO grid -->
+    @if (Filtered.Count == 0)
+    {
+        <div class="empty">No NGOs found.</div>
+    }
+    else
+    {
+        <div class="ng-grid">
+            @foreach (var o in Filtered)
+            {
+                var badge = StatusBadge(o);
+                <div class="ng-card">
+                    <div class="ng-head">
+                        <div class="ng-id">
+                            <span class="ng-avatar">@Initial(o.NGO.Name)</span>
+                            <div>
+                                <div class="ng-name">@o.NGO.Name</div>
+                                <div class="ng-city">
+                                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                    @o.NGO.City
+                                </div>
+                            </div>
+                        </div>
+                        <span class="badge @badge.cls">@badge.label</span>
+                    </div>
+
+                    <div class="ng-stats">
+                        <div class="ng-stat"><div class="ng-stat-num">@o.Campaigns</div><div class="ng-stat-lbl">Campaigns</div></div>
+                        <div class="ng-stat"><div class="ng-stat-num">PKR @FormatMoney(o.TotalRaised)</div><div class="ng-stat-lbl">Total Raised</div></div>
+                        <div class="ng-stat"><div class="ng-stat-num">@o.Volunteers</div><div class="ng-stat-lbl">Volunteers</div></div>
+                    </div>
+
+                    <div class="ng-foot">
+                        <span class="joined">Joined: @o.NGO.CreatedAt.ToString("MMM yyyy")</span>
+                        <div class="ng-actions">
+                            <button class="act view" @onclick="() => ViewProfile(o.NGO.Id)">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                View Profile
+                            </button>
+                            <button class="act del" @onclick="() => DeleteAsync(o.NGO.Id)">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<NgoOverview> rows = new();
+    private string search = "";
+
+    private int activeCount => rows.Count(o => o.NGO.Status == "Approved");
+    private int newCount => rows.Count(o => o.IsNew);
+    private int totalCampaigns => rows.Sum(o => o.Campaigns);
+
+    private List<NgoOverview> Filtered =>
+        string.IsNullOrWhiteSpace(search)
+            ? rows
+            : rows.Where(o => o.NGO.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                           || (o.NGO.City ?? "").Contains(search, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync() => rows = await AdminService.GetNgoOverviewAsync();
+
+    private void ViewProfile(int id) => Nav.NavigateTo($"/ngos/{id}");
+
+    private async Task DeleteAsync(int id)
+    {
+        await AdminService.DeleteNGOAsync(id);
+        await LoadAsync();
+    }
+
+    private static (string label, string cls) StatusBadge(NgoOverview o)
+    {
+        if (o.NGO.Status == "Suspended") return ("Suspended", "b-susp");
+        if (o.NGO.Status == "Pending") return ("Pending", "b-pend");
+        if (o.NGO.Status == "Rejected") return ("Rejected", "b-rej");
+        if (o.IsNew) return ("New", "b-new");
+        return ("Active", "b-active");
+    }
+
+    private static string Initial(string? name) =>
+        string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1).ToUpper();
+
+    private static string FormatMoney(decimal v)
+    {
+        if (v >= 1_000_000_000) return (v / 1_000_000_000m).ToString("0.#") + "B";
+        if (v >= 1_000_000) return (v / 1_000_000m).ToString("0.#") + "M";
+        if (v >= 1_000) return (v / 1_000m).ToString("0.#") + "K";
+        return v.ToString("N0");
+    }
+}

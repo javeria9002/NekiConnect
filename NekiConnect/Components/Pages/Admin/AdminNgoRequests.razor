@@ -1,0 +1,200 @@
+﻿@page "/admin/ngo-requests"
+@layout AdminLayout
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject AdminService AdminService
+@inject EmailService EmailService
+
+<Navbar />
+
+<div class="rq-page">
+
+    <h1 class="rq-title">NGO Registration Requests</h1>
+    <p class="rq-sub">Review and approve or reject NGO registration applications.</p>
+
+    <!-- Stat cards -->
+    <div class="stat-row">
+        <div class="stat-card amber">
+            <div class="stat-ico amber">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+            </div>
+            <div class="stat-num amber-t">@pendingCount</div>
+            <div class="stat-lbl">Pending</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-ico green">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+            </div>
+            <div class="stat-num green-t">@approvedCount</div>
+            <div class="stat-lbl">Approved</div>
+        </div>
+        <div class="stat-card red">
+            <div class="stat-ico red">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+            </div>
+            <div class="stat-num red-t">@rejectedCount</div>
+            <div class="stat-lbl">Rejected</div>
+        </div>
+    </div>
+
+    @if (pendingCount > 0)
+    {
+        <div class="await-banner">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            <span><strong>@pendingCount request(s)</strong> require your review and decision.</span>
+        </div>
+    }
+
+    <!-- Search + filters -->
+    <div class="filter-bar">
+        <div class="search-wrap">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+            <input class="search-inp" placeholder="Search NGO name, city..." @bind="search" @bind:event="oninput" />
+        </div>
+        <div class="filter-btns">
+            @foreach (var f in new[] { "All", "Pending", "Approved", "Rejected" })
+            {
+                <button class="fbtn @(filter == f ? "active" : "")" @onclick="() => filter = f">@f</button>
+            }
+        </div>
+    </div>
+
+    <!-- Requests -->
+    @if (Filtered.Count == 0)
+    {
+        <div class="empty">No NGO requests found.</div>
+    }
+    else
+    {
+        @foreach (var n in Filtered)
+        {
+            <div class="rq-card @StatusBorder(n.Status)">
+                <div class="rq-row">
+                    <!-- identity -->
+                    <div class="rq-id">
+                        <span class="rq-ico">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /></svg>
+                        </span>
+                        <div class="rq-id-info">
+                            <div class="rq-name">@n.Name</div>
+                            <div class="rq-city">@n.City</div>
+                            <div class="rq-email">@n.ContactEmail</div>
+                        </div>
+                    </div>
+
+                    <!-- details -->
+                    <div class="rq-details">
+                        <div><span class="lbl">Category:</span> @n.Category</div>
+                        <div><span class="lbl">Phone:</span> @n.ContactPhone</div>
+                        <div><span class="lbl">Applied:</span> @n.CreatedAt.ToString("MMM d, yyyy")</div>
+                    </div>
+
+                    <!-- docs + status -->
+                    <div class="rq-docs">
+                        <div class="docs-line"><span class="lbl">Documents:</span> @(string.IsNullOrEmpty(n.CertificateUrl) ? "None" : "Uploaded")</div>
+                        <span class="badge @StatusBadge(n.Status)">@n.Status</span>
+                    </div>
+
+                    <!-- actions -->
+                    <div class="rq-actions">
+                        @if (!string.IsNullOrEmpty(n.CertificateUrl))
+                        {
+                            <a class="act view" href="@n.CertificateUrl" target="_blank" rel="noopener">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                View Docs
+                            </a>
+                        }
+                        @if (n.Status == "Pending")
+                        {
+                            <button class="act approve" @onclick="() => ApproveAsync(n)">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                                Approve
+                            </button>
+                            <button class="act reject" @onclick="() => StartReject(n.Id)">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                                Reject
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <!-- inline reject reason -->
+                @if (rejectingId == n.Id)
+                {
+                    <div class="reject-box">
+                        <input class="reject-inp" placeholder="Reason for rejection (sent to the NGO)..." @bind="rejectReason" />
+                        <button class="btn-confirm" @onclick="() => ConfirmRejectAsync(n)">Confirm Reject</button>
+                        <button class="btn-cancel" @onclick="CancelReject">Cancel</button>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<NGO> ngos = new();
+    private string filter = "All";
+    private string search = "";
+    private int rejectingId;
+    private string rejectReason = "";
+
+    private int pendingCount => ngos.Count(n => n.Status == "Pending");
+    private int approvedCount => ngos.Count(n => n.Status == "Approved");
+    private int rejectedCount => ngos.Count(n => n.Status == "Rejected");
+
+    private List<NGO> Filtered =>
+        ngos.Where(n => filter == "All" || n.Status == filter)
+            .Where(n => string.IsNullOrWhiteSpace(search)
+                     || n.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                     || (n.City ?? "").Contains(search, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync() => ngos = await AdminService.GetAllNGOsAsync();
+
+    private async Task ApproveAsync(NGO n)
+    {
+        await AdminService.ApproveNGOAsync(n.Id);
+        if (!string.IsNullOrWhiteSpace(n.ContactEmail))
+            await EmailService.SendNgoApprovedEmailAsync(n.ContactEmail, n.Name);
+        await LoadAsync();
+    }
+
+    private void StartReject(int id)
+    {
+        rejectingId = id;
+        rejectReason = "";
+    }
+
+    private async Task ConfirmRejectAsync(NGO n)
+    {
+        if (string.IsNullOrWhiteSpace(rejectReason)) return;
+        await AdminService.RejectNGOAsync(n.Id, rejectReason);
+        if (!string.IsNullOrWhiteSpace(n.ContactEmail))
+            await EmailService.SendNgoRejectedEmailAsync(n.ContactEmail, n.Name, rejectReason);
+        CancelReject();
+        await LoadAsync();
+    }
+
+    private void CancelReject()
+    {
+        rejectingId = 0;
+        rejectReason = "";
+    }
+
+    private static string StatusBorder(string s) => s switch
+    {
+        "Approved" => "border-green",
+        "Rejected" => "border-red",
+        _ => "border-amber"
+    };
+
+    private static string StatusBadge(string s) => s switch
+    {
+        "Approved" => "badge-approved",
+        "Rejected" => "border-red badge-rejected",
+        _ => "badge-pending"
+    };
+}

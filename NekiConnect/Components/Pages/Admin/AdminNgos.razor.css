@@ -1,0 +1,295 @@
+﻿.ng-page {
+    padding: 1.75rem 2rem;
+}
+
+.ng-title {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 .25rem;
+}
+
+.ng-sub {
+    font-size: .9rem;
+    color: #6b7280;
+    margin: 0 0 1.5rem;
+}
+
+.stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.25rem 1.4rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+
+.stat-num {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+    .stat-num.dark {
+        color: #111827;
+    }
+
+    .stat-num.green {
+        color: #16a34a;
+    }
+
+    .stat-num.blue {
+        color: #2563eb;
+    }
+
+    .stat-num.purple {
+        color: #7c3aed;
+    }
+
+.stat-lbl {
+    font-size: .82rem;
+    color: #6b7280;
+    margin-top: .35rem;
+}
+
+.filter-bar {
+    display: flex;
+    gap: .75rem;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.search-wrap {
+    position: relative;
+    flex: 1 1 240px;
+    min-width: 200px;
+}
+
+    .search-wrap svg {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+    }
+
+.search-inp {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: .65rem .9rem .65rem 2.6rem;
+    font-size: .9rem;
+    outline: none;
+    background: #fff;
+}
+
+    .search-inp:focus {
+        border-color: #16a34a;
+        box-shadow: 0 0 0 3px #dcfce7;
+    }
+
+.export-btn {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    border: 1.5px solid #e5e7eb;
+    background: #fff;
+    color: #374151;
+    border-radius: 9px;
+    padding: .55rem 1rem;
+    font-size: .85rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+    .export-btn:hover {
+        border-color: #9ca3af;
+        background: #f9fafb;
+    }
+
+/* NGO grid */
+.ng-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.ng-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+
+.ng-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.1rem;
+}
+
+.ng-id {
+    display: flex;
+    gap: .8rem;
+    align-items: center;
+    min-width: 0;
+}
+
+.ng-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #dcfce7;
+    color: #16a34a;
+    font-weight: 700;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ng-name {
+    font-weight: 700;
+    color: #111827;
+    font-size: 1.02rem;
+}
+
+.ng-city {
+    font-size: .8rem;
+    color: #6b7280;
+    margin-top: .12rem;
+}
+
+.badge {
+    font-size: .7rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: .22rem .7rem;
+}
+
+.b-active {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.b-new {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.b-pend {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.b-susp {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.b-rej {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.ng-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .75rem;
+    margin-bottom: 1.1rem;
+}
+
+.ng-stat {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: .8rem .5rem;
+    text-align: center;
+}
+
+.ng-stat-num {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.ng-stat-lbl {
+    font-size: .72rem;
+    color: #9ca3af;
+    margin-top: .2rem;
+}
+
+.ng-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.joined {
+    font-size: .78rem;
+    color: #9ca3af;
+}
+
+.ng-actions {
+    display: flex;
+    gap: .5rem;
+}
+
+.act {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    padding: .42rem .85rem;
+    font-size: .82rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+    .act.view {
+        color: #2563eb;
+    }
+
+        .act.view:hover {
+            border-color: #93c5fd;
+            background: #eff6ff;
+        }
+
+    .act.del {
+        color: #dc2626;
+        border-color: #fecaca;
+        padding: .42rem .6rem;
+    }
+
+        .act.del:hover {
+            background: #fef2f2;
+        }
+
+.empty {
+    background: #fff;
+    border-radius: 14px;
+    padding: 2.5rem;
+    text-align: center;
+    color: #9ca3af;
+}
+
+@media (max-width: 1000px) {
+    .stat-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ng-grid {
+        grid-template-columns: 1fr;
+    }
+}

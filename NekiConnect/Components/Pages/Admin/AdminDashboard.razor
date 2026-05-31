@@ -1,0 +1,186 @@
+﻿@page "/admin/dashboard"
+@layout AdminLayout
+@using NekiConnect.Services
+@inject AdminService AdminService
+@inject NavigationManager Nav
+
+<Navbar/>
+
+<div class="ad-page">
+
+    <h1 class="ad-title">Admin Dashboard</h1>
+    <p class="ad-sub">Platform-wide overview and control panel for NekiConnect.</p>
+
+    @if (pendingNGOs > 0)
+    {
+        <div class="review-banner">
+            <span>
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-3px">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <strong>@pendingNGOs NGO registration request@(pendingNGOs == 1 ? "" : "s")</strong> are awaiting your review.
+            </span>
+            <button class="review-btn" @onclick='() => Nav.NavigateTo("/admin/ngo-requests")'>Review Now &rarr;</button>
+        </div>
+    }
+
+    <!-- Stat cards -->
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-ico blue">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+            </div>
+            <div class="stat-value">@totalUsers.ToString("N0")</div>
+            <div class="stat-label">Total Users</div>
+            <div class="stat-trend up">+124 this month</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-ico purple">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /></svg>
+            </div>
+            <div class="stat-value">@totalNGOs.ToString("N0")</div>
+            <div class="stat-label">Registered NGOs</div>
+            <div class="stat-trend">@pendingNGOs pending approval</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-ico green">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
+            </div>
+            <div class="stat-value">PKR @FormatMoney(totalRaised)</div>
+            <div class="stat-label">Total Raised</div>
+            <div class="stat-trend up">+PKR 18M this month</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-ico rose">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+            </div>
+            <div class="stat-value">@activeCampaigns.ToString("N0")</div>
+            <div class="stat-label">Active Campaigns</div>
+            <div class="stat-trend">12 ending soon</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-grid">
+        <div class="panel">
+            <div class="panel-head">
+                <h3 class="panel-title">Platform Activity (Last 6 Months)</h3>
+                <span class="panel-tag">Donations (PKR)</span>
+            </div>
+            <div class="chart">
+                @{
+                    decimal maxVal = trends.Count > 0 ? trends.Max(t => t.Total) : 0; if (maxVal <= 0) maxVal = 1;
+                }
+                @foreach (var t in trends)
+                {
+                    var pct = (double)(t.Total / maxVal) * 100;
+                    <div class="bar-col">
+                        <div class="bar-wrap"><div class="bar" style="height:@(pct.ToString("F1"))%" title="PKR @FormatMoney(t.Total)"></div></div>
+                        <span class="bar-lbl">@t.Month</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3 class="panel-title">Donations by Category</h3>
+            @if (categories.Count == 0)
+            {
+                <p class="muted">No donation data yet.</p>
+            }
+            else
+            {
+                <div class="donut-wrap">
+                    <div class="donut" style="background:@DonutGradient()"><div class="donut-hole"></div></div>
+                </div>
+                <div class="legend">
+                    @for (int i = 0; i < categories.Count; i++)
+                    {
+                        <span class="legend-item">
+                            <span class="legend-dot" style="background:@ColorAt(i)"></span>
+                            @categories[i].Category
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Quick Access -->
+    <div class="panel">
+        <h3 class="panel-title qa-title">Quick Access</h3>
+        <div class="qa-grid">
+            <button class="qa-card" @onclick='() => Nav.NavigateTo("/admin/ngo-requests")'>
+                <span class="qa-ico amber"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /></svg></span>
+                <span class="qa-text"><b>NGO Requests</b><small>@pendingNGOs pending</small></span>
+                <span class="qa-arrow">&rarr;</span>
+            </button>
+            <button class="qa-card" @onclick='() => Nav.NavigateTo("/admin/users")'>
+                <span class="qa-ico blue"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg></span>
+                <span class="qa-text"><b>All Users</b><small>@totalUsers.ToString("N0") registered</small></span>
+                <span class="qa-arrow">&rarr;</span>
+            </button>
+            <button class="qa-card" @onclick='() => Nav.NavigateTo("/admin/donations")'>
+                <span class="qa-ico green"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78z" /></svg></span>
+                <span class="qa-text"><b>All Donations</b><small>View transactions</small></span>
+                <span class="qa-arrow">&rarr;</span>
+            </button>
+            <button class="qa-card" @onclick='() => Nav.NavigateTo("/admin/ngos")'>
+                <span class="qa-ico purple"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /></svg></span>
+                <span class="qa-text"><b>All NGOs</b><small>@totalNGOs organisations</small></span>
+                <span class="qa-arrow">&rarr;</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int totalUsers, totalNGOs, pendingNGOs, activeCampaigns;
+    private decimal totalRaised;
+    private List<MonthlyDonation> trends = new();
+    private List<CategoryTotal> categories = new();
+
+    private static readonly string[] Colors =
+        { "#16a34a", "#2563eb", "#7c3aed", "#06b6d4", "#f97316", "#eab308" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        totalUsers = await AdminService.GetTotalUsersAsync();
+        totalNGOs = await AdminService.GetTotalNGOsAsync();
+        pendingNGOs = await AdminService.GetPendingNGOsCountAsync();
+        activeCampaigns = await AdminService.GetActiveCampaignsCountAsync();
+        totalRaised = await AdminService.GetTotalDonationsAsync();
+        trends = await AdminService.GetPlatformMonthlyAsync();
+        categories = await AdminService.GetDonationsByCategoryAsync();
+    }
+
+    private string ColorAt(int i) => Colors[i % Colors.Length];
+
+    private string DonutGradient()
+    {
+        decimal total = categories.Sum(c => c.Total);
+        if (total <= 0) return "conic-gradient(#e5e7eb 0deg 360deg)";
+
+        var sb = new System.Text.StringBuilder("conic-gradient(");
+        double acc = 0;
+        for (int i = 0; i < categories.Count; i++)
+        {
+            double pct = (double)(categories[i].Total / total);
+            double start = acc * 360; acc += pct; double end = acc * 360;
+            sb.Append($"{ColorAt(i)} {start:F1}deg {end:F1}deg");
+            if (i < categories.Count - 1) sb.Append(", ");
+        }
+        sb.Append(')');
+        return sb.ToString();
+    }
+
+    private static string FormatMoney(decimal v)
+    {
+        if (v >= 1_000_000_000) return (v / 1_000_000_000m).ToString("0.#") + "B";
+        if (v >= 1_000_000) return (v / 1_000_000m).ToString("0.#") + "M";
+        if (v >= 1_000) return (v / 1_000m).ToString("0.#") + "K";
+        return v.ToString("N0");
+    }
+}

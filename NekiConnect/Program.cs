@@ -65,7 +65,7 @@ builder.Services.AddScoped<VolunteerService>();
 builder.Services.AddScoped<BlogService>();
 builder.Services.AddScoped<BeneficiaryService>();
 builder.Services.AddScoped<UserService>();
-//builder.Services.AddScoped<AdminService>();
+builder.Services.AddScoped<AdminService>();
 //builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<AuthService>();
 
