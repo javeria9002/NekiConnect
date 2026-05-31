@@ -1,0 +1,283 @@
+﻿@page "/campaigns"
+@using Microsoft.AspNetCore.Identity
+@using NekiConnect.Models
+@using NekiConnect.Services
+@using System.Net.Http.Headers
+@using System.Text
+@using System.Text.Json
+@inject CampaignService CampaignService
+@inject UserManager<ApplicationUser> UserManager
+@inject TokenService TokenService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Campaigns – NekiConnect</PageTitle>
+
+<div class="campaigns-page">
+    <div class="campaigns-header">
+        <h1 class="campaigns-title">Active Campaigns</h1>
+        <p class="campaigns-subtitle">Support a cause that matters to you</p>
+    </div>
+
+    @if (campaigns.Any())
+    {
+        <div class="campaigns-grid">
+            @foreach (var c in campaigns)
+            {
+                var progress = c.GoalAmount > 0 ? (double)(c.RaisedAmount / c.GoalAmount * 100) : 0;
+                <div class="campaign-card">
+                    @if (!string.IsNullOrEmpty(c.ImageUrl))
+                    {
+                        <img src="@c.ImageUrl" class="campaign-img" alt="@c.Title" />
+                    }
+                    else
+                    {
+                        <div class="campaign-img-placeholder">
+                            <svg width="40" height="40" fill="none" stroke="#9ca3af" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                        </div>
+                    }
+                    <div class="campaign-body">
+                        <div class="campaign-ngo">@(c.NGO?.Name ?? "NGO")</div>
+                        <div class="campaign-name">@c.Title</div>
+                        <div class="campaign-desc">@(c.Description.Length > 100 ? c.Description.Substring(0, 100) + "..." : c.Description)</div>
+
+                        <div class="campaign-progress-bar">
+                            <div class="campaign-progress-fill" style="width:@Math.Min(progress, 100)%"></div>
+                        </div>
+                        <div class="campaign-amounts">
+                            <span class="raised">PKR @c.RaisedAmount.ToString("N0") raised</span>
+                            <span class="goal">of PKR @c.GoalAmount.ToString("N0")</span>
+                        </div>
+
+                        <div class="campaign-meta">
+                            <span>📍 @c.Location</span>
+                            <span>📅 @c.CampaignDate.ToString("MMM dd, yyyy")</span>
+                        </div>
+
+                        <button class="btn-donate" @onclick="() => OpenDonate(c)">Donate Now</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">No active campaigns at the moment.</div>
+    }
+</div>
+
+@if (selectedCampaign != null)
+{
+    <div class="modal-overlay" @onclick="CloseDonate">
+        <div class="modal-box" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title">Donate to Campaign</div>
+                    <div class="modal-sub">@selectedCampaign.Title</div>
+                </div>
+                <button class="modal-close" @onclick="CloseDonate">✕</button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(successMsg))
+            {
+                <div class="alert-success">@successMsg</div>
+            }
+            @if (!string.IsNullOrEmpty(errorMsg))
+            {
+                <div class="alert-error">@errorMsg</div>
+            }
+
+            @if (string.IsNullOrEmpty(successMsg))
+            {
+                <div class="form-group">
+                    <label class="form-label">Amount</label>
+                    <input @bind="donateAmount" type="number" class="form-input" placeholder="Enter amount" min="1" />
+                </div>
+
+                <div class="payment-tabs">
+                    <button class="@(paymentTab == "manual" ? "tab active" : "tab")"
+                            @onclick='() => paymentTab = "manual"'>
+                        JazzCash / EasyPaisa
+                    </button>
+                    <button class="@(paymentTab == "stripe" ? "tab active" : "tab")"
+                            @onclick='() => paymentTab = "stripe"'>
+                        Card (Stripe)
+                    </button>
+                </div>
+
+                @if (paymentTab == "manual")
+                {
+                    <div class="payment-instructions">
+                        <p>📱 Send <strong>PKR @donateAmount.ToString("N0")</strong> to:</p>
+                        <p><strong>JazzCash / EasyPaisa: 0300-0000000</strong></p>
+                        <p>Then enter your transaction ID below.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Payment Method</label>
+                        <select @bind="paymentMethod" class="form-input">
+                            <option value="JazzCash">JazzCash</option>
+                            <option value="EasyPaisa">EasyPaisa</option>
+                            <option value="BankTransfer">Bank Transfer</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Transaction ID</label>
+                        <input @bind="transactionId" class="form-input" placeholder="e.g. JC-123456789" />
+                    </div>
+
+                    <button class="btn-submit" @onclick="SubmitManualDonation" disabled="@isSubmitting">
+                        @(isSubmitting ? "Processing..." : "Confirm Donation")
+                    </button>
+                }
+                else
+                {
+                    <div class="payment-instructions">
+                        <p>💳 You will be redirected to Stripe's secure payment page.</p>
+                        <p>Use test card: <strong>4242 4242 4242 4242</strong></p>
+                        <p>Any future expiry date, any 3-digit CVC.</p>
+                    </div>
+
+                    <button class="btn-submit btn-stripe" @onclick="SubmitStripePayment" disabled="@isSubmitting">
+                        @(isSubmitting ? "Redirecting..." : "Pay with Card (Stripe)")
+                    </button>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    List<Campaign> campaigns = new();
+    Campaign? selectedCampaign;
+    decimal donateAmount;
+    string paymentMethod = "JazzCash";
+    string transactionId = "";
+    string paymentTab = "manual";
+    string successMsg = "";
+    string errorMsg = "";
+    bool isSubmitting = false;
+    ApplicationUser? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        campaigns = await CampaignService.GetAllActiveCampaignsAsync();
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (auth.User.Identity?.IsAuthenticated == true)
+            currentUser = await UserManager.GetUserAsync(auth.User);
+    }
+
+    void OpenDonate(Campaign campaign)
+    {
+        if (currentUser == null) { Nav.NavigateTo("/login"); return; }
+        selectedCampaign = campaign;
+        donateAmount = 0;
+        transactionId = "";
+        successMsg = "";
+        errorMsg = "";
+        paymentMethod = "JazzCash";
+        paymentTab = "manual";
+    }
+
+    void CloseDonate() => selectedCampaign = null;
+
+    async Task SubmitManualDonation()
+    {
+        if (selectedCampaign == null || currentUser == null) return;
+        if (donateAmount <= 0) { errorMsg = "Please enter a valid amount."; return; }
+        if (string.IsNullOrWhiteSpace(transactionId)) { errorMsg = "Please enter your transaction ID."; return; }
+
+        isSubmitting = true;
+        errorMsg = "";
+
+        try
+        {
+            var token = TokenService.GenerateToken(currentUser);
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            var payload = new
+            {
+                campaignId = selectedCampaign.Id,
+                amount = donateAmount,
+                paymentMethod = paymentMethod,
+                paymentReference = transactionId
+            };
+
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var baseUrl = Nav.BaseUri.TrimEnd('/');
+            var response = await client.PostAsync($"{baseUrl}/api/donations/manual", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMsg = $"Thank you! PKR {donateAmount:N0} donated. Check your email for the receipt.";
+                var camp = campaigns.FirstOrDefault(c => c.Id == selectedCampaign.Id);
+                if (camp != null) camp.RaisedAmount += donateAmount;
+            }
+            else
+            {
+                errorMsg = "Donation failed. Please try again.";
+            }
+        }
+        catch (Exception _)
+        {
+            errorMsg = "Something went wrong. Please try again.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    async Task SubmitStripePayment()
+    {
+        if (selectedCampaign == null || currentUser == null) return;
+        if (donateAmount <= 0) { errorMsg = "Please enter a valid amount."; return; }
+
+        isSubmitting = true;
+        errorMsg = "";
+
+        try
+        {
+            var token = TokenService.GenerateToken(currentUser);
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            var payload = new
+            {
+                campaignId = selectedCampaign.Id,
+                amount = donateAmount
+            };
+
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var baseUrl = Nav.BaseUri.TrimEnd('/');
+            var response = await client.PostAsync($"{baseUrl}/api/donations/stripe-checkout", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadAsStringAsync();
+                var doc = JsonSerializer.Deserialize<JsonElement>(result);
+                var url = doc.GetProperty("url").GetString();
+                if (url != null) Nav.NavigateTo(url, forceLoad: true);
+            }
+            else
+            {
+                errorMsg = "Could not create payment session. Please try again.";
+            }
+        }
+        catch (Exception _)
+        {
+            errorMsg = "Something went wrong. Please try again.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

@@ -1,0 +1,217 @@
+﻿@page "/donor/dashboard"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using NekiConnect.Models
+@using NekiConnect.Services
+@attribute [Authorize(Roles = "Donor")]
+@inject UserManager<ApplicationUser> UserManager
+@inject DonationService DonationService
+@inject VolunteerService VolunteerService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Donor Dashboard – NekiConnect</PageTitle>
+
+<div class="donor-layout">
+    <div class="donor-sidebar">
+        <div class="donor-sidebar-profile">
+            <div class="donor-avatar">@(currentUser?.FullName?.Substring(0,1).ToUpper() ?? "D")</div>
+            <div class="donor-sidebar-name">@currentUser?.FullName</div>
+            <div class="donor-sidebar-role">Donor Account</div>
+        </div>
+        <nav class="donor-nav">
+            <a href="/donor/dashboard" class="active">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
+                Dashboard
+            </a>
+            <a href="/donor/donations">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                My Donations
+            </a>
+            <a href="/donor/applications">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>
+                Volunteer Applications
+            </a>
+            <a href="/donor/profile">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                My Profile
+            </a>
+        </nav>
+        <div class="donor-logout">
+            <form method="post" action="/Account/Logout">
+                <AntiforgeryToken />
+                <button type="submit">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+                    Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="donor-content">
+        <div class="donor-breadcrumb">Donor Portal › @currentUser?.FullName</div>
+        <h2 class="donor-page-title">Welcome back, @currentUser?.FullName! 👋</h2>
+        <p class="donor-page-subtitle">Here's a summary of your activity on NekiConnect.</p>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <svg width="20" height="20" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                <div class="stat-value">PKR @FormatAmount(totalDonated)</div>
+                <div class="stat-label">Total Donated</div>
+            </div>
+            <div class="stat-card">
+                <svg width="20" height="20" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
+                <div class="stat-value">@campaignsSupported</div>
+                <div class="stat-label">Campaigns Supported</div>
+            </div>
+            <div class="stat-card">
+                <svg width="20" height="20" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                <div class="stat-value">@volunteerCount</div>
+                <div class="stat-label">Volunteer Apps</div>
+            </div>
+            <div class="stat-card">
+                <svg width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                <div class="stat-value">PKR @FormatAmount(thisMonth)</div>
+                <div class="stat-label">This Month</div>
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Recent Donations</span>
+                    <a href="/donor/donations" class="card-link">View all →</a>
+                </div>
+                @if (recentDonations.Any())
+                {
+                    @foreach (var d in recentDonations)
+                    {
+                        <div class="list-item">
+                            <div class="list-item-left">
+                                <div class="list-icon green">
+                                    <svg width="14" height="14" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                                </div>
+                                <div>
+                                    <div class="list-title">@(d.Campaign?.Title ?? "General Donation")</div>
+                                    <div class="list-sub">@d.DonatedAt.ToString("MMM dd, yyyy")</div>
+                                </div>
+                            </div>
+                            <span class="amount">PKR @d.Amount.ToString("N0")</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty">No donations yet</div>
+                }
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Volunteer Applications</span>
+                    <a href="/donor/applications" class="card-link">View all →</a>
+                </div>
+                @if (recentApplications.Any())
+                {
+                    @foreach (var a in recentApplications)
+                    {
+                        <div class="list-item">
+                            <div class="list-item-left">
+                                <div class="list-icon @IconClass(a.Status)">
+                                    @StatusIcon(a.Status)
+                                </div>
+                                <div>
+                                    <div class="list-title">@(a.Campaign?.Title ?? "Campaign")</div>
+                                    <div class="list-sub">@(a.Campaign?.NGO?.Name ?? "")</div>
+                                </div>
+                            </div>
+                            <span class="badge badge-@a.Status.ToLower()">@a.Status</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty">No applications yet</div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Quick Actions</div>
+            <div class="actions-grid">
+                <a href="/campaigns" class="action-item">
+                    <div class="action-left">
+                        <div class="action-icon green">
+                            <svg width="16" height="16" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                        </div>
+                        <div>
+                            <div class="action-title">Browse Campaigns</div>
+                            <div class="action-sub">Find a cause to support</div>
+                        </div>
+                    </div>
+                    <svg width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>
+                </a>
+                <a href="/events" class="action-item">
+                    <div class="action-left">
+                        <div class="action-icon blue">
+                            <svg width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                        </div>
+                        <div>
+                            <div class="action-title">Browse Events</div>
+                            <div class="action-sub">Volunteer opportunities</div>
+                        </div>
+                    </div>
+                    <svg width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>
+                </a>
+                <a href="/donor/profile" class="action-item">
+                    <div class="action-left">
+                        <div class="action-icon purple">
+                            <svg width="16" height="16" fill="none" stroke="#8b5cf6" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                        </div>
+                        <div>
+                            <div class="action-title">Edit Profile</div>
+                            <div class="action-sub">Update your information</div>
+                        </div>
+                    </div>
+                    <svg width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    ApplicationUser? currentUser;
+    List<Donation> recentDonations = new();
+    List<VolunteerApplication> recentApplications = new();
+    decimal totalDonated, thisMonth;
+    int campaignsSupported, volunteerCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+        if (user.Identity?.IsAuthenticated != true) { Nav.NavigateTo("/login"); return; }
+        currentUser = await UserManager.GetUserAsync(user);
+        if (currentUser == null) return;
+
+        var id = currentUser.Id;
+        totalDonated = await DonationService.GetTotalDonatedAsync(id);
+        thisMonth = await DonationService.GetThisMonthDonatedAsync(id);
+        campaignsSupported = await DonationService.GetCampaignsSupportedCountAsync(id);
+        volunteerCount = await VolunteerService.GetApplicationsCountAsync(id);
+        recentDonations = (await DonationService.GetDonationsByDonorIdAsync(id)).Take(4).ToList();
+        recentApplications = (await VolunteerService.GetApplicationsByUserIdAsync(id)).Take(4).ToList();
+    }
+
+    string FormatAmount(decimal a) => a >= 1000 ? $"{a / 1000:0.#}K" : a.ToString("N0");
+    string IconClass(string s) => s switch { "Accepted" => "green", "Rejected" => "red", _ => "yellow" };
+
+    RenderFragment StatusIcon(string s) => s switch
+    {
+        "Accepted" => @<svg width="14" height="14" fill="none" stroke="#16a34a" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>,
+        "Rejected" => @<svg width="14" height="14" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
+        _ => @<svg width="14" height="14" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+        };
+}

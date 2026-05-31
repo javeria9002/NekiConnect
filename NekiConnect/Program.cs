@@ -52,17 +52,19 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddCascadingAuthenticationState();
 
+builder.Services.AddHttpClient();
+
 // ── Services (uncomment as you rebuild each file) ──
 builder.Services.AddScoped<NGOService>();
 //builder.Services.AddScoped<FundraisingService>();
-//builder.Services.AddScoped<CampaignService>();
-//builder.Services.AddScoped<DonationService>();
-//builder.Services.AddScoped<VolunteerService>();
+builder.Services.AddScoped<CampaignService>();
+builder.Services.AddScoped<DonationService>();
+builder.Services.AddScoped<VolunteerService>();
 //builder.Services.AddScoped<BlogService>();
 //builder.Services.AddScoped<BeneficiaryService>();
 builder.Services.AddScoped<UserService>();
 //builder.Services.AddScoped<AdminService>();
-//builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<AuthService>();
 
 // ── JWT ──
@@ -70,6 +72,9 @@ builder.Services.AddScoped<TokenService>();
 
 // ── Email (Brevo) ──
 builder.Services.AddScoped<EmailService>();
+
+// ── Payment (Stripe) ──
+builder.Services.AddScoped<PaymentService>();
 
 var app = builder.Build();
 
