@@ -10,8 +10,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+// ── Database: factory (Blazor-safe) + scoped context (for Identity) ──
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<ApplicationDbContext>(sp =>
+    sp.GetRequiredService<IDbContextFactory<ApplicationDbContext>>().CreateDbContext());
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -54,12 +58,12 @@ builder.Services.AddCascadingAuthenticationState();
 
 // ── Services (uncomment as you rebuild each file) ──
 builder.Services.AddScoped<NGOService>();
-//builder.Services.AddScoped<FundraisingService>();
-//builder.Services.AddScoped<CampaignService>();
+builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<CampaignService>();
 //builder.Services.AddScoped<DonationService>();
-//builder.Services.AddScoped<VolunteerService>();
-//builder.Services.AddScoped<BlogService>();
-//builder.Services.AddScoped<BeneficiaryService>();
+builder.Services.AddScoped<VolunteerService>();
+builder.Services.AddScoped<BlogService>();
+builder.Services.AddScoped<BeneficiaryService>();
 builder.Services.AddScoped<UserService>();
 //builder.Services.AddScoped<AdminService>();
 //builder.Services.AddScoped<NotificationService>();

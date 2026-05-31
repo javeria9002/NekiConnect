@@ -15,7 +15,8 @@ namespace NekiConnect.Data
         public DbSet<Donation> Donations { get; set; }
         public DbSet<VolunteerApplication> VolunteerApplications { get; set; }
         public DbSet<BlogPost> BlogPosts { get; set; }
-
+        public DbSet<Event> Events { get; set; }
+        public DbSet<Beneficiary> Beneficiaries { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

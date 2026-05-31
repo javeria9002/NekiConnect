@@ -1,0 +1,263 @@
+﻿@page "/ngo/events"
+@layout NgoLayout
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject NGOService NgoService
+@inject EventService EventService
+@inject AuthenticationStateProvider AuthProvider
+
+<Navbar/>
+
+<div class="ev-page">
+
+    <!-- Header -->
+    <div class="ev-header">
+        <div>
+            <h1 class="ev-title">Events</h1>
+            <p class="ev-sub">Organise and manage volunteer events and activities.</p>
+        </div>
+        @if (showForm || editing is not null)
+        {
+            <button class="btn-add" @onclick="CancelForm">Cancel</button>
+        }
+        else
+        {
+            <button class="btn-add" @onclick="() => showForm = true">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="16" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+                Add Event
+            </button>
+        }
+    </div>
+
+    <!-- Create / Edit form -->
+    @if (showForm || editing is not null)
+    {
+        var model = editing ?? newEvent;
+        <div class="form-card">
+            <h3 class="form-head">@(editing is null ? "Create New Event" : "Edit Event")</h3>
+            <div class="form-grid">
+                <div class="fcol">
+                    <label>Event Title</label>
+                    <input @bind="model.Title" placeholder="e.g. Volunteer Awareness Walk" />
+                </div>
+                <div class="fcol">
+                    <label>Location</label>
+                    <input @bind="model.Location" placeholder="e.g. Islamabad" />
+                </div>
+                <div class="fcol">
+                    <label>Date</label>
+                    <input type="date" @bind="model.EventDate" />
+                </div>
+                <div class="fcol">
+                    <label>Total Spots</label>
+                    <input type="number" @bind="model.SeatsAvailable" placeholder="50" />
+                </div>
+                <div class="fcol">
+                    <label>Volunteers Registered</label>
+                    <input type="number" @bind="model.RegisteredCount" placeholder="0" />
+                </div>
+                <div class="fcol">
+                    <label>Status</label>
+                    <select @bind="model.Status">
+                        <option value="Upcoming">Upcoming</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="fcol full">
+                    <label>Description</label>
+                    <textarea rows="3" @bind="model.Description" placeholder="Describe the event..."></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn-ghost" @onclick="CancelForm">Cancel</button>
+                <button class="btn-save" @onclick="SaveAsync">
+                    @(editing is null ? "Create Event" : "Save Changes")
+                </button>
+            </div>
+        </div>
+    }
+
+    <!-- Events grid -->
+    @if (events.Count == 0)
+    {
+        <div class="empty">No events yet. Click "Add Event" to create one.</div>
+    }
+    else
+    {
+        <div class="ev-grid">
+            @foreach (var e in events)
+            {
+                var isFull = e.SeatsAvailable > 0 && e.RegisteredCount >= e.SeatsAvailable;
+                var pct = e.SeatsAvailable > 0
+                                ? Math.Min(e.RegisteredCount * 100.0 / e.SeatsAvailable, 100) : 0;
+
+                <div class="ev-card">
+                    <div class="ev-card-top">
+                        <span class="ev-name">@e.Title</span>
+                        <span class="badge @BadgeClass(e, isFull)">@BadgeLabel(e, isFull)</span>
+                    </div>
+
+                    <div class="ev-meta">
+                        <span>
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px">
+                                <rect x="3" y="4" width="18" height="18" rx="2" />
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                                <line x1="8" y1="2" x2="8" y2="6" />
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                            </svg>
+                            @e.EventDate.ToString("MMM d, yyyy")
+                        </span>
+                        <span>
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px">
+                                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            @e.Location
+                        </span>
+                    </div>
+
+                    <div class="prog-row">
+                        <span class="prog-lbl">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                            Volunteers Registered
+                        </span>
+                        <span class="prog-count">@e.RegisteredCount/@e.SeatsAvailable</span>
+                    </div>
+                    <div class="prog-track">
+                        <div class="prog-fill" style="width:@(pct.ToString("F1"))%"></div>
+                    </div>
+                    @if (isFull)
+                    {
+                        <span class="full-text">Event is full</span>
+                    }
+
+                    @if (viewingId == e.Id && !string.IsNullOrWhiteSpace(e.Description))
+                    {
+                        <div class="ev-desc">@e.Description</div>
+                    }
+
+                    <div class="ev-actions">
+                        <button class="act view" @onclick="() => ToggleView(e.Id)">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            View
+                        </button>
+                        <button class="act edit" @onclick="() => StartEdit(e)">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                            Edit
+                        </button>
+                        <button class="act del" @onclick="() => DeleteAsync(e.Id)">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6l-1 14H6L5 6" />
+                                <path d="M10 11v6" />
+                                <path d="M14 11v6" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private NGO? ngo;
+    private List<Event> events = new();
+    private Event newEvent = new() { EventDate = DateTime.Today, Status = "Upcoming" };
+    private Event? editing;
+    private bool showForm;
+    private int viewingId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) return;
+
+        ngo = await NgoService.GetNGOByUserIdAsync(userId);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        if (ngo is null) return;
+        events = await EventService.GetByNgoIdAsync(ngo.Id);
+    }
+
+    private async Task SaveAsync()
+    {
+        if (ngo is null) return;
+
+        if (editing is not null)
+        {
+            await EventService.UpdateAsync(editing);
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(newEvent.Title)) return;
+            newEvent.NgoId = ngo.Id;
+            await EventService.CreateAsync(newEvent);
+            newEvent = new() { EventDate = DateTime.Today, Status = "Upcoming" };
+        }
+        CancelForm();
+        await LoadAsync();
+    }
+
+    private void StartEdit(Event e)
+    {
+        editing = new Event
+        {
+            Id = e.Id,
+            Title = e.Title,
+            Location = e.Location,
+            EventDate = e.EventDate,
+            SeatsAvailable = e.SeatsAvailable,
+            RegisteredCount = e.RegisteredCount,
+            Description = e.Description,
+            Status = e.Status,
+            NgoId = e.NgoId
+        };
+        showForm = false;
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        await EventService.DeleteAsync(id);
+        await LoadAsync();
+    }
+
+    private void ToggleView(int id) => viewingId = viewingId == id ? 0 : id;
+
+    private void CancelForm()
+    {
+        showForm = false;
+        editing = null;
+        newEvent = new() { EventDate = DateTime.Today, Status = "Upcoming" };
+    }
+
+    private static string BadgeClass(Event e, bool isFull) =>
+        e.Status == "Completed" ? "badge-done" :
+        e.Status == "Cancelled" ? "badge-cancel" :
+        isFull ? "badge-full" : "badge-open";
+
+    private static string BadgeLabel(Event e, bool isFull) =>
+        e.Status == "Completed" ? "Completed" :
+        e.Status == "Cancelled" ? "Cancelled" :
+        isFull ? "Full" : "Open";
+}
