@@ -1,0 +1,125 @@
+﻿@page "/"
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject NGOService NgoService
+@inject CampaignService CampaignService
+@inject NavigationManager Nav
+
+<PageTitle>NekiConnect — Connecting hearts to causes</PageTitle>
+
+<Navbar />
+
+<section class="hero">
+    <div class="hero-inner">
+        <h1 class="hero-title">Connecting hearts to causes across Pakistan</h1>
+        <p class="hero-sub">Donate to verified NGOs, volunteer for campaigns, and track your impact — all in one place.</p>
+        <div class="hero-cta">
+            <button class="btn-primary" @onclick='() => Nav.NavigateTo("/ngos")'>Browse NGOs</button>
+            <button class="btn-ghost" @onclick='() => Nav.NavigateTo("/campaigns")'>Explore Campaigns</button>
+        </div>
+    </div>
+</section>
+
+<section class="stats">
+    <div class="stat"><div class="stat-num">@ngos.Count</div><div class="stat-lbl">Verified NGOs</div></div>
+    <div class="stat"><div class="stat-num">@campaigns.Count</div><div class="stat-lbl">Active Campaigns</div></div>
+    <div class="stat"><div class="stat-num">PKR @FormatMoney(totalRaised)</div><div class="stat-lbl">Total Raised</div></div>
+    <div class="stat"><div class="stat-num">@totalSeats</div><div class="stat-lbl">Volunteer Spots</div></div>
+</section>
+
+<section class="section">
+    <h2 class="section-title">How NekiConnect Works</h2>
+    <div class="how-grid">
+        <div class="how-card">
+            <div class="how-ico green"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg></div>
+            <h3>1. Discover</h3>
+            <p>Browse verified NGOs and active campaigns by city and category.</p>
+        </div>
+        <div class="how-card">
+            <div class="how-ico blue"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg></div>
+            <h3>2. Donate or Volunteer</h3>
+            <p>Give securely via JazzCash, EasyPaisa, or card — or sign up to volunteer.</p>
+        </div>
+        <div class="how-card">
+            <div class="how-ico purple"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg></div>
+            <h3>3. Track Impact</h3>
+            <p>See your donations, receipts, and the difference you're making.</p>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-head">
+        <h2 class="section-title">Featured Campaigns</h2>
+        <a class="see-all" href="/campaigns">See all &rarr;</a>
+    </div>
+    @if (campaigns.Count == 0)
+    {
+        <p class="muted">No active campaigns right now.</p>
+    }
+    else
+    {
+        <div class="card-grid">
+            @foreach (var c in campaigns.Take(3))
+            {
+                var pct = c.GoalAmount > 0 ? (double)Math.Min(c.RaisedAmount * 100 / c.GoalAmount, 100) : 0;
+                <div class="feat-card" @onclick='() => Nav.NavigateTo("/campaigns")'>
+                    <div class="feat-title">@c.Title</div>
+                    <div class="feat-loc">@c.Location · @c.CampaignDate.ToString("MMM d, yyyy")</div>
+                    <div class="track"><div class="fill" style="width:@(pct.ToString("F1"))%"></div></div>
+                    <div class="feat-amt">PKR @c.RaisedAmount.ToString("N0") of @c.GoalAmount.ToString("N0")</div>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+<section class="section">
+    <div class="section-head">
+        <h2 class="section-title">Featured NGOs</h2>
+        <a class="see-all" href="/ngos">See all &rarr;</a>
+    </div>
+    <div class="card-grid four">
+        @foreach (var n in ngos.Take(4))
+        {
+            <div class="ngo-card" @onclick="() => OpenNgo(n.Id)">
+                <span class="ngo-avatar">@Initial(n.Name)</span>
+                <div class="ngo-name">@n.Name</div>
+                <div class="ngo-city">@n.City</div>
+                <span class="ngo-cat">@n.Category</span>
+            </div>
+        }
+    </div>
+</section>
+
+<section class="cta-band">
+    <h2>Ready to make a difference?</h2>
+    <p>Join thousands of donors and volunteers supporting verified causes.</p>
+    <button class="btn-white" @onclick='() => Nav.NavigateTo("/register")'>Get Started</button>
+</section>
+
+@code {
+    private List<NGO> ngos = new();
+    private List<Campaign> campaigns = new();
+
+    private decimal totalRaised => campaigns.Sum(c => c.RaisedAmount);
+    private int totalSeats => campaigns.Sum(c => c.SeatsAvailable);
+
+    protected override async Task OnInitializedAsync()
+    {
+        ngos = await NgoService.GetAllApprovedNGOsAsync();
+        campaigns = await CampaignService.GetAllActiveCampaignsAsync();
+    }
+
+    private void OpenNgo(int id) => Nav.NavigateTo($"/ngos/{id}");
+
+    private static string Initial(string? name) =>
+        string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1).ToUpper();
+
+    private static string FormatMoney(decimal v)
+    {
+        if (v >= 1_000_000) return (v / 1_000_000m).ToString("0.#") + "M";
+        if (v >= 1_000) return (v / 1_000m).ToString("0.#") + "K";
+        return v.ToString("N0");
+    }
+}

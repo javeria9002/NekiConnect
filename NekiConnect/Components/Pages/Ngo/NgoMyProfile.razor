@@ -1,0 +1,138 @@
+﻿@page "/ngo/profile"
+@layout NgoLayout
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject NGOService NgoService
+@inject AuthenticationStateProvider AuthProvider
+
+<div class="mp-page">
+
+    <h1 class="mp-title">Organisation Profile</h1>
+    <p class="mp-sub">Update the details supporters see on your public profile.</p>
+
+    @if (ngo is null)
+    {
+        <div class="mp-empty">No NGO profile linked to your account.</div>
+    }
+    else
+    {
+        @if (saved)
+        {
+            <div class="mp-saved">✓ Profile updated successfully.</div>
+        }
+
+        <!-- Header card -->
+        <div class="mp-headcard">
+            @if (!string.IsNullOrWhiteSpace(ngo.LogoUrl))
+            {
+                <img class="mp-logo" src="@ngo.LogoUrl" alt="logo" />
+            }
+            else
+            {
+                <span class="mp-logo-fallback">@Initial(ngo.Name)</span>
+            }
+            <div class="mp-head-info">
+                <div class="mp-head-name">@ngo.Name</div>
+                <div class="mp-head-meta">@ngo.City · @ngo.Category</div>
+            </div>
+            <span class="mp-status @StatusClass(ngo.Status)">@ngo.Status</span>
+        </div>
+
+        <!-- Edit form -->
+        <div class="mp-card">
+            <h3 class="mp-h">Basic Information</h3>
+            <div class="mp-grid">
+                <div class="fcol">
+                    <label>NGO Name</label>
+                    <input @bind="ngo.Name" />
+                </div>
+                <div class="fcol">
+                    <label>Category</label>
+                    <select @bind="ngo.Category">
+                        <option>Education</option>
+                        <option>Health / Medical</option>
+                        <option>Food &amp; Nutrition</option>
+                        <option>Disaster Relief</option>
+                        <option>Women Empowerment</option>
+                        <option>Child Welfare</option>
+                        <option>Environment</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="fcol">
+                    <label>City</label>
+                    <input @bind="ngo.City" />
+                </div>
+                <div class="fcol">
+                    <label>Registration Number</label>
+                    <input @bind="ngo.RegistrationNumber" />
+                </div>
+                <div class="fcol full">
+                    <label>Mission / Objective</label>
+                    <textarea rows="4" @bind="ngo.Mission" placeholder="Describe your organisation's mission and objectives..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="mp-card">
+            <h3 class="mp-h">Contact &amp; Media</h3>
+            <div class="mp-grid">
+                <div class="fcol">
+                    <label>Contact Email</label>
+                    <input @bind="ngo.ContactEmail" />
+                </div>
+                <div class="fcol">
+                    <label>Contact Phone</label>
+                    <input @bind="ngo.ContactPhone" />
+                </div>
+                <div class="fcol">
+                    <label>Logo URL (optional)</label>
+                    <input @bind="ngo.LogoUrl" placeholder="https://..." />
+                </div>
+                <div class="fcol">
+                    <label>Certificate / Docs URL (optional)</label>
+                    <input @bind="ngo.CertificateUrl" placeholder="https://..." />
+                </div>
+            </div>
+
+            <div class="mp-actions">
+                <button class="btn-save" @onclick="SaveAsync">Save Changes</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private NGO? ngo;
+    private bool saved;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) return;
+
+        ngo = await NgoService.GetNGOByUserIdAsync(userId);
+    }
+
+    private async Task SaveAsync()
+    {
+        if (ngo is null) return;
+        if (string.IsNullOrWhiteSpace(ngo.Name)) return;
+
+        await NgoService.UpdateAsync(ngo);
+        saved = true;
+    }
+
+    private static string Initial(string? name) =>
+        string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1).ToUpper();
+
+    private static string StatusClass(string s) => s switch
+    {
+        "Approved" => "st-approved",
+        "Pending" => "st-pending",
+        "Rejected" => "st-rejected",
+        "Suspended" => "st-suspended",
+        _ => "st-pending"
+    };
+}

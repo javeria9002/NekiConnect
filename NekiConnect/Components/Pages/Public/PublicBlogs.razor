@@ -1,0 +1,54 @@
+﻿@page "/blogs"
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject BlogService BlogService
+
+<PageTitle>Blogs — NekiConnect</PageTitle>
+
+<Navbar />
+
+<div class="pb-page">
+    <div class="pb-head">
+        <h1 class="pb-title">Stories &amp; Updates</h1>
+        <p class="pb-sub">Impact stories and updates from NGOs on NekiConnect.</p>
+    </div>
+
+    @if (posts.Count == 0)
+    {
+        <div class="empty">No blog posts yet.</div>
+    }
+    else
+    {
+        <div class="pb-grid">
+            @foreach (var b in posts)
+            {
+                <div class="pb-card">
+                    <div class="pb-top">
+                        <span class="pb-cat">@b.Category</span>
+                        <span class="pb-date">@b.CreatedAt.ToString("MMM d, yyyy")</span>
+                    </div>
+                    <h3 class="pb-card-title">@b.Title</h3>
+                    <div class="pb-by">by @(b.NGO?.Name ?? "NGO")</div>
+                    <p class="pb-excerpt">
+                        @(expandedId == b.Id
+                            ? b.Content
+                            : (b.Content.Length > 160 ? b.Content.Substring(0, 160) + "…" : b.Content))
+                    </p>
+                    <button class="pb-readmore" @onclick="() => Toggle(b.Id)">
+                        @(expandedId == b.Id ? "Show less" : "Read more →")
+                    </button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<BlogPost> posts = new();
+    private int expandedId;
+
+    protected override async Task OnInitializedAsync()
+        => posts = await BlogService.GetAllPublishedAsync();
+
+    private void Toggle(int id) => expandedId = expandedId == id ? 0 : id;
+}

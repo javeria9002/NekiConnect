@@ -66,6 +66,9 @@ builder.Services.AddScoped<UserService>();
 //builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<BranchService>();
+
+builder.Services.AddHttpClient();
 
 // ── JWT ──
 builder.Services.AddScoped<TokenService>();

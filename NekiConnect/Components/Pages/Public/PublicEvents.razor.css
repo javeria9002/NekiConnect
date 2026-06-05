@@ -1,0 +1,136 @@
+﻿.pe-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+}
+
+.pe-head {
+    text-align: center;
+    margin-bottom: 1.8rem;
+}
+
+.pe-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 .4rem;
+}
+
+.pe-sub {
+    font-size: .95rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.pe-search {
+    position: relative;
+    max-width: 420px;
+    margin: 0 auto 2rem;
+}
+
+    .pe-search svg {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+    }
+
+    .pe-search input {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        padding: .7rem .9rem .7rem 2.6rem;
+        font-size: .9rem;
+        outline: none;
+    }
+
+        .pe-search input:focus {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px #dcfce7;
+        }
+
+.pe-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.pe-card {
+    background: #fff;
+    border: 1.5px solid #eef0f3;
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.pe-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.pe-name {
+    font-weight: 700;
+    color: #111827;
+    font-size: 1.05rem;
+}
+
+.pe-badge {
+    font-size: .7rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: .2rem .7rem;
+}
+
+    .pe-badge.open {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .pe-badge.full {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+.pe-ngo {
+    font-size: .82rem;
+    color: #16a34a;
+    margin: .25rem 0 .8rem;
+}
+
+.pe-meta {
+    display: flex;
+    gap: 1.1rem;
+    font-size: .8rem;
+    color: #6b7280;
+    margin-bottom: .8rem;
+}
+
+.pe-desc {
+    font-size: .88rem;
+    color: #4b5563;
+    line-height: 1.55;
+    margin: 0 0 .8rem;
+}
+
+.pe-foot {
+    font-size: .8rem;
+    color: #9ca3af;
+    border-top: 1px solid #f3f4f6;
+    padding-top: .8rem;
+}
+
+.empty {
+    background: #fff;
+    border-radius: 16px;
+    padding: 3rem;
+    text-align: center;
+    color: #9ca3af;
+}
+
+@media (max-width: 800px) {
+    .pe-grid {
+        grid-template-columns: 1fr;
+    }
+}

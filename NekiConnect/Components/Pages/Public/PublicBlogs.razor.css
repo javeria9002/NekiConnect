@@ -1,0 +1,106 @@
+﻿.pb-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+}
+
+.pb-head {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.pb-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 .4rem;
+}
+
+.pb-sub {
+    font-size: .95rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.pb-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.pb-card {
+    background: #fff;
+    border: 1.5px solid #eef0f3;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.pb-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .8rem;
+}
+
+.pb-cat {
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: .7rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: .2rem .7rem;
+}
+
+.pb-date {
+    font-size: .76rem;
+    color: #9ca3af;
+}
+
+.pb-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 .35rem;
+}
+
+.pb-by {
+    font-size: .8rem;
+    color: #16a34a;
+    margin-bottom: .8rem;
+}
+
+.pb-excerpt {
+    font-size: .88rem;
+    color: #4b5563;
+    line-height: 1.6;
+    margin: 0 0 1rem;
+    flex: 1;
+    white-space: pre-wrap;
+}
+
+.pb-readmore {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: #16a34a;
+    font-weight: 600;
+    font-size: .85rem;
+    cursor: pointer;
+    padding: 0;
+}
+
+.empty {
+    background: #fff;
+    border-radius: 16px;
+    padding: 3rem;
+    text-align: center;
+    color: #9ca3af;
+}
+
+@media (max-width: 900px) {
+    .pb-grid {
+        grid-template-columns: 1fr;
+    }
+}

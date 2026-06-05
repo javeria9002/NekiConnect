@@ -1,0 +1,241 @@
+﻿.br-page {
+    padding: 1.75rem 2rem;
+}
+
+.br-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.br-title {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 .25rem;
+}
+
+.br-sub {
+    font-size: .9rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.btn-add {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: .6rem 1.3rem;
+    font-size: .88rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+    .btn-add:hover {
+        background: #15803d;
+    }
+
+/* Form with preview */
+.form-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.6rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    margin-bottom: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.form-head {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 1.1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.fcol {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    margin-bottom: 1rem;
+}
+
+    .fcol label {
+        font-size: .78rem;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .fcol input {
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        padding: .6rem .8rem;
+        font-size: .88rem;
+        color: #111827;
+        outline: none;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+        .fcol input:focus {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px #dcfce7;
+        }
+
+.coord-tip {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: .75rem .9rem;
+    font-size: .8rem;
+    color: #15803d;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+    .coord-tip a {
+        color: #15803d;
+        font-weight: 600;
+    }
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .75rem;
+}
+
+.btn-ghost {
+    background: transparent;
+    border: none;
+    color: #374151;
+    font-size: .88rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: .55rem .9rem;
+}
+
+.btn-save {
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: .55rem 1.4rem;
+    font-size: .88rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .btn-save:hover {
+        background: #15803d;
+    }
+
+.form-preview {
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-lbl {
+    font-size: .78rem;
+    font-weight: 600;
+    color: #9ca3af;
+    margin-bottom: .4rem;
+}
+
+.preview-map {
+    width: 100%;
+    flex: 1;
+    min-height: 280px;
+    border: 0;
+    border-radius: 12px;
+}
+
+/* Branch cards */
+.br-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.br-card {
+    background: #fff;
+    border: 1.5px solid #eef0f3;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.br-map {
+    width: 100%;
+    height: 180px;
+    border: 0;
+    display: block;
+}
+
+.br-info {
+    padding: 1.1rem 1.25rem .5rem;
+}
+
+.br-name {
+    font-weight: 700;
+    color: #111827;
+}
+
+.br-loc {
+    font-size: .82rem;
+    color: #6b7280;
+    margin: .3rem 0;
+}
+
+.br-coords {
+    font-size: .76rem;
+    color: #9ca3af;
+}
+
+.br-del {
+    margin: 0 1.25rem 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    border: 1.5px solid #fecaca;
+    background: #fff;
+    color: #dc2626;
+    border-radius: 8px;
+    padding: .45rem .9rem;
+    font-size: .82rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+    .br-del:hover {
+        background: #fef2f2;
+    }
+
+.empty {
+    background: #fff;
+    border-radius: 14px;
+    padding: 2.5rem;
+    text-align: center;
+    color: #9ca3af;
+}
+
+@media (max-width: 900px) {
+    .form-card {
+        grid-template-columns: 1fr;
+    }
+
+    .br-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,306 @@
+﻿@page "/ngo/branches"
+@layout NgoLayout
+@using System.Globalization
+@using System.Net.Http.Json
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject NGOService NgoService
+@inject BranchService BranchService
+@inject AuthenticationStateProvider AuthProvider
+@inject HttpClient Http
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<Navbar/>
+
+<div class="br-page">
+
+    <!-- ── Header ── -->
+    <div class="br-header">
+        <div>
+            <h1 class="br-title">Branches &amp; Locations</h1>
+            <p class="br-sub">Add your office locations so supporters can find you on the map.</p>
+        </div>
+        <button class="btn-add" @onclick="ToggleForm">
+            @if (showForm)
+            {
+                <span>✕ Cancel</span>
+            }
+            else
+            {
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                     viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="16" />
+                    <line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+                <span>Add Branch</span>
+            }
+        </button>
+    </div>
+
+    <!-- ── Overview map (all branches) ── -->
+    @if (branches.Count > 0)
+    {
+        <div id="overview-map" style="height:340px; border-radius:12px; margin-bottom:2rem;"></div>
+    }
+
+    <!-- ── Add form ── -->
+    @if (showForm)
+    {
+        <div class="form-card">
+            <div class="form-left">
+                <h3 class="form-head">New Branch</h3>
+
+                <div class="fcol">
+                    <label>Branch Name</label>
+                    <input @bind="newBranch.BranchName" placeholder="e.g. Head Office" />
+                </div>
+
+                <div class="form-row">
+                    <div class="fcol">
+                        <label>City</label>
+                        <input @bind="newCity" placeholder="Karachi" />
+                    </div>
+                    <div class="fcol">
+                        <label>Address (optional)</label>
+                        <input @bind="newAddress" placeholder="Gulberg III" />
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(geocodeError))
+                {
+                    <div class="geocode-error">⚠️ @geocodeError</div>
+                }
+
+                <div class="form-actions">
+                    <button class="btn-ghost" @onclick="PreviewAsync" disabled="@isGeocoding">
+                        @(isGeocoding ? "Locating…" : "📍 Preview on Map")
+                    </button>
+                    <button class="btn-save" @onclick="SaveAsync" disabled="@(!previewReady)">
+                        Save Branch
+                    </button>
+                </div>
+            </div>
+
+            <!-- Live Leaflet preview -->
+            <div class="form-preview">
+                <label class="preview-lbl">
+                    @(previewReady ? $"📍 {newCity}" : "Enter city & click Preview")
+                </label>
+                <div id="preview-map"
+                     style="height:260px; border-radius:10px; background:#e8edf0;">
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- ── Branch cards ── -->
+    @if (branches.Count == 0 && !showForm)
+    {
+        <div class="empty">No branches yet. Click "Add Branch" to add your first location.</div>
+    }
+    else if (branches.Count > 0)
+    {
+        <div class="br-grid">
+            @foreach (var b in branches)
+            {
+                <div class="br-card">
+                    <!-- Individual Leaflet map per card -->
+                    <div id="map-@b.Id"
+                         style="height:180px; border-radius:10px 10px 0 0;">
+                    </div>
+                    <div class="br-info">
+                        <div class="br-name">@b.BranchName</div>
+                        <div class="br-loc">
+                            <svg width="13" height="13" fill="none" stroke="currentColor"
+                                 stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px">
+                                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            @(string.IsNullOrEmpty(b.Address) ? b.City : $"{b.Address}, {b.City}")
+                        </div>
+                    </div>
+                    <button class="br-del" @onclick="() => DeleteAsync(b.Id)">
+                        <svg width="15" height="15" fill="none" stroke="currentColor"
+                             stroke-width="2" viewBox="0 0 24 24">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14H6L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                        </svg>
+                        Delete
+                    </button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private NGO? ngo;
+    private List<NgoBranch> branches = new();
+    private NgoBranch newBranch = new();
+    private string newCity = "";
+    private string newAddress = "";
+    private bool showForm;
+    private bool previewReady;
+    private bool isGeocoding;
+    private string geocodeError = "";
+
+    // ── Lifecycle ──────────────────────────────────────────────
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) return;
+
+        ngo = await NgoService.GetNGOByUserIdAsync(userId);
+        await LoadAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Render individual card maps
+        foreach (var b in branches)
+        {
+            await JS.InvokeVoidAsync("branchMap.init",
+                $"map-{b.Id}", b.Latitude, b.Longitude,
+                $"<strong>{b.BranchName}</strong><br>{b.City}");
+        }
+
+        // Render overview map with all pins
+        if (branches.Count > 0)
+        {
+            var payload = branches.Select(b => new
+            {
+                latitude = b.Latitude,
+                longitude = b.Longitude,
+                branchName = b.BranchName,
+                city = b.City,
+                address = b.Address
+            });
+            await JS.InvokeVoidAsync("branchMap.initOverview", "overview-map", payload);
+        }
+    }
+
+    // ── Data ───────────────────────────────────────────────────
+
+    private async Task LoadAsync()
+    {
+        if (ngo is null) return;
+        branches = await BranchService.GetByNgoIdAsync(ngo.Id);
+    }
+
+    // ── Geocoding (Nominatim — free, no key, Pakistan-scoped) ──
+
+    private async Task PreviewAsync()
+    {
+        geocodeError = "";
+        previewReady = false;
+
+        if (string.IsNullOrWhiteSpace(newCity))
+        {
+            geocodeError = "Please enter at least a city name.";
+            return;
+        }
+
+        isGeocoding = true;
+        StateHasChanged();
+
+        try
+        {
+            var query = string.IsNullOrWhiteSpace(newAddress)
+                          ? $"{newCity}, Pakistan"
+                          : $"{newAddress}, {newCity}, Pakistan";
+            var encoded = Uri.EscapeDataString(query);
+            var url = $"https://nominatim.openstreetmap.org/search" +
+                          $"?q={encoded}&format=json&limit=1&countrycodes=pk";
+
+            var req = new HttpRequestMessage(HttpMethod.Get, url);
+            req.Headers.Add("User-Agent", "NekiConnect/1.0");
+
+            var res = await Http.SendAsync(req);
+            var results = await res.Content.ReadFromJsonAsync<NominatimResult[]>();
+
+            if (results is null || results.Length == 0)
+            {
+                geocodeError = $"Could not find \"{query}\". Try a broader address.";
+                return;
+            }
+
+            var ci = CultureInfo.InvariantCulture;
+            newBranch.Latitude = double.Parse(results[0].lat, ci);
+            newBranch.Longitude = double.Parse(results[0].lon, ci);
+            newBranch.City = newCity;
+            newBranch.Address = newAddress;
+            previewReady = true;
+
+            // Push to Leaflet preview map after render
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(50); // let DOM settle
+            await JS.InvokeVoidAsync("branchMap.update",
+                "preview-map",
+                newBranch.Latitude,
+                newBranch.Longitude,
+                $"<strong>{newBranch.BranchName}</strong><br>{newCity}");
+        }
+        catch (Exception ex)
+        {
+            geocodeError = $"Geocoding failed: {ex.Message}";
+        }
+        finally
+        {
+            isGeocoding = false;
+            StateHasChanged();
+        }
+    }
+
+    // ── CRUD ───────────────────────────────────────────────────
+
+    private async Task SaveAsync()
+    {
+        if (ngo is null || !previewReady) return;
+        if (string.IsNullOrWhiteSpace(newBranch.BranchName)) return;
+
+        newBranch.NgoId = ngo.Id;
+        await BranchService.CreateAsync(newBranch);
+        CancelForm();
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        await JS.InvokeVoidAsync("branchMap.destroy", $"map-{id}");
+        await BranchService.DeleteAsync(id);
+        await LoadAsync();
+    }
+
+    private void ToggleForm()
+    {
+        showForm = !showForm;
+        if (!showForm) CancelForm();
+    }
+
+    private void CancelForm()
+    {
+        showForm = false;
+        previewReady = false;
+        geocodeError = "";
+        newCity = "";
+        newAddress = "";
+        newBranch = new();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Clean up all Leaflet instances when page is navigated away
+        foreach (var b in branches)
+            await JS.InvokeVoidAsync("branchMap.destroy", $"map-{b.Id}");
+        await JS.InvokeVoidAsync("branchMap.destroy", "overview-map");
+        await JS.InvokeVoidAsync("branchMap.destroy", "preview-map");
+    }
+
+    private record NominatimResult(string lat, string lon, string display_name);
+}

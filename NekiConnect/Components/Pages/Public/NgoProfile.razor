@@ -1,0 +1,217 @@
+﻿@page "/ngos/{Id:int}"
+@using System.Globalization
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject NGOService NgoService
+@inject BranchService BranchService
+@inject CampaignService CampaignService
+@inject VolunteerService VolunteerService
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Nav
+
+<PageTitle>@(ngo?.Name ?? "NGO") — NekiConnect</PageTitle>
+
+<Navbar />
+
+@if (ngo is null)
+{
+    <div class="np-missing">NGO not found. <a href="/ngos">Back to all NGOs</a></div>
+}
+else
+{
+    <div class="np-page">
+
+        <div class="np-banner">
+            <span class="np-avatar">@Initial(ngo.Name)</span>
+            <div>
+                <h1 class="np-name">
+                    @ngo.Name
+                    <span class="np-verified">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>
+                        Verified
+                    </span>
+                </h1>
+                <div class="np-meta">
+                    <span><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg> @ngo.City</span>
+                    <span class="np-cat">@ngo.Category</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="np-grid">
+            <div class="np-left">
+                <div class="np-card">
+                    <h3 class="np-h">About &amp; Objective</h3>
+                    <p class="np-mission">@(string.IsNullOrWhiteSpace(ngo.Mission) ? "This NGO has not added an objective yet." : ngo.Mission)</p>
+                </div>
+                <div class="np-card">
+                    <h3 class="np-h">Contact</h3>
+                    <div class="np-contact">
+                        <div><span class="cl">Email</span> @ngo.ContactEmail</div>
+                        <div><span class="cl">Phone</span> @ngo.ContactPhone</div>
+                        <div><span class="cl">Reg. No.</span> @ngo.RegistrationNumber</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="np-right">
+                <div class="np-card map-card">
+                    <h3 class="np-h">Branches &amp; Locations</h3>
+                    <iframe class="np-map" title="NGO location map" src="@MapUrl(selectedBranch)" loading="lazy"></iframe>
+                    @if (branches.Count > 0)
+                    {
+                        <div class="branch-list">
+                            @foreach (var b in branches)
+                            {
+                                <button class="branch-chip @(selectedBranch?.Id == b.Id ? "active" : "")" @onclick="() => selectedBranch = b">
+                                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                    @b.BranchName <span class="branch-city">· @b.City</span>
+                                </button>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="np-nobranch">No branches added yet — map shows Pakistan.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="np-section">
+            <h2 class="np-section-title">Campaigns by @ngo.Name</h2>
+            @if (campaigns.Count == 0)
+            {
+                <p class="np-empty">No active campaigns right now.</p>
+            }
+            else
+            {
+                <div class="np-camp-grid">
+                    @foreach (var c in campaigns)
+                    {
+                        var pct = c.GoalAmount > 0 ? (double)Math.Min(c.RaisedAmount * 100 / c.GoalAmount, 100) : 0;
+                        <div class="np-camp">
+                            <div class="np-camp-title">@c.Title</div>
+                            <div class="np-camp-loc">@c.Location · @c.CampaignDate.ToString("MMM d, yyyy")</div>
+                            <div class="np-track"><div class="np-fill" style="width:@(pct.ToString("F1"))%"></div></div>
+                            <div class="np-camp-amt">PKR @c.RaisedAmount.ToString("N0") raised of @c.GoalAmount.ToString("N0")</div>
+
+                            <!-- Volunteer apply -->
+                            @if (appliedIds.Contains(c.Id))
+                            {
+                                <div class="applied-badge">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12" /></svg>
+                                    Applied to volunteer
+                                </div>
+                            }
+                            else if (applyingId == c.Id)
+                            {
+                                <div class="apply-form">
+                                    <input class="apply-inp" placeholder="Your skills (e.g. teaching, first aid)" @bind="applySkills" />
+                                    <input class="apply-inp" placeholder="Availability (e.g. weekends)" @bind="applyAvailability" />
+                                    <div class="apply-actions">
+                                        <button class="apply-cancel" @onclick="CancelApply">Cancel</button>
+                                        <button class="apply-submit" @onclick="() => SubmitApplyAsync(c.Id)">Submit</button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <button class="apply-btn" @onclick="() => StartApply(c.Id)">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6" /><path d="M22 11h-6" /></svg>
+                                    Apply to Volunteer
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private NGO? ngo;
+    private List<NgoBranch> branches = new();
+    private List<Campaign> campaigns = new();
+    private NgoBranch? selectedBranch;
+
+    private string? userId;
+    private HashSet<int> appliedIds = new();
+    private int applyingId;
+    private string applySkills = "";
+    private string applyAvailability = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        ngo = await NgoService.GetNGOByIdAsync(Id);
+        if (ngo is null) return;
+
+        branches = await BranchService.GetByNgoIdAsync(Id);
+        campaigns = await CampaignService.GetCampaignsByNgoIdAsync(Id);
+        selectedBranch = branches.FirstOrDefault();
+
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            var apps = await VolunteerService.GetApplicationsByUserIdAsync(userId);
+            appliedIds = apps.Select(a => a.CampaignId).ToHashSet();
+        }
+    }
+
+    private void StartApply(int campaignId)
+    {
+        // not logged in → send to login, then back here
+        if (string.IsNullOrEmpty(userId))
+        {
+            Nav.NavigateTo($"/login?tab=donor&returnUrl=/ngos/{Id}");
+            return;
+        }
+        applyingId = campaignId;
+        applySkills = "";
+        applyAvailability = "";
+    }
+
+    private void CancelApply()
+    {
+        applyingId = 0;
+        applySkills = "";
+        applyAvailability = "";
+    }
+
+    private async Task SubmitApplyAsync(int campaignId)
+    {
+        if (string.IsNullOrEmpty(userId)) return;
+
+        await VolunteerService.ApplyAsync(new VolunteerApplication
+        {
+            UserId = userId,
+            CampaignId = campaignId,
+            Skills = applySkills,
+            Availability = applyAvailability
+        });
+
+        appliedIds.Add(campaignId);
+        CancelApply();
+    }
+
+    private static string MapUrl(NgoBranch? b)
+    {
+        var ci = CultureInfo.InvariantCulture;
+        double lat = b?.Latitude ?? 30.3753;
+        double lng = b?.Longitude ?? 69.3451;
+        double d = b != null ? 0.03 : 6.0;
+
+        double minLon = lng - d, minLat = lat - d, maxLon = lng + d, maxLat = lat + d;
+        string bbox = $"{minLon.ToString(ci)},{minLat.ToString(ci)},{maxLon.ToString(ci)},{maxLat.ToString(ci)}";
+        string marker = b != null ? $"&marker={lat.ToString(ci)},{lng.ToString(ci)}" : "";
+        return $"https://www.openstreetmap.org/export/embed.html?bbox={bbox}&layer=mapnik{marker}";
+    }
+
+    private static string Initial(string? name) =>
+        string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1).ToUpper();
+}

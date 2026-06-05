@@ -1,0 +1,88 @@
+﻿@page "/ngos"
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject NGOService NgoService
+@inject NavigationManager Nav
+
+<PageTitle>Browse NGOs — NekiConnect</PageTitle>
+
+<Navbar />
+
+<div class="bn-page">
+    <div class="bn-head">
+        <h1 class="bn-title">Browse NGOs</h1>
+        <p class="bn-sub">Discover and support verified non-profit organisations across Pakistan.</p>
+    </div>
+
+    <div class="bn-filter">
+        <div class="search-wrap">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+            <input class="search-inp" placeholder="Search NGO name or city..." @bind="search" @bind:event="oninput" />
+        </div>
+        <select class="cat-select" @bind="category">
+            <option value="">All Categories</option>
+            @foreach (var c in categories)
+            {
+                <option value="@c">@c</option>
+            }
+        </select>
+    </div>
+
+    @if (Filtered.Count == 0)
+    {
+        <div class="empty">No approved NGOs found.</div>
+    }
+    else
+    {
+        <div class="bn-grid">
+            @foreach (var n in Filtered)
+            {
+                <div class="bn-card" @onclick="() => OpenProfile(n.Id)">
+                    <div class="bn-card-head">
+                        <span class="bn-avatar">@Initial(n.Name)</span>
+                        <div class="bn-id">
+                            <div class="bn-name">@n.Name</div>
+                            <div class="bn-city">
+                                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                @n.City
+                            </div>
+                        </div>
+                    </div>
+                    <span class="bn-cat">@n.Category</span>
+                    <p class="bn-mission">@(string.IsNullOrWhiteSpace(n.Mission) ? "Working to make a difference in their community." : n.Mission)</p>
+                    <div class="bn-foot">
+                        <span class="bn-verified">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>
+                            Verified
+                        </span>
+                        <span class="bn-link">View Profile &rarr;</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<NGO> ngos = new();
+    private string search = "";
+    private string category = "";
+
+    private List<string> categories =>
+        ngos.Select(n => n.Category).Where(c => !string.IsNullOrWhiteSpace(c)).Distinct().OrderBy(c => c).ToList();
+
+    private List<NGO> Filtered =>
+        ngos.Where(n => string.IsNullOrEmpty(category) || n.Category == category)
+            .Where(n => string.IsNullOrWhiteSpace(search)
+                     || n.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                     || (n.City ?? "").Contains(search, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+    protected override async Task OnInitializedAsync()
+        => ngos = await NgoService.GetAllApprovedNGOsAsync();
+
+    private void OpenProfile(int id) => Nav.NavigateTo($"/ngos/{id}");
+
+    private static string Initial(string? name) =>
+        string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1).ToUpper();
+}

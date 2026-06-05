@@ -1,0 +1,64 @@
+﻿@page "/events"
+@using NekiConnect.Models
+@using NekiConnect.Services
+@inject EventService EventService
+
+<PageTitle>Events — NekiConnect</PageTitle>
+
+<Navbar />
+
+<div class="pe-page">
+    <div class="pe-head">
+        <h1 class="pe-title">Upcoming Events</h1>
+        <p class="pe-sub">Volunteer events and activities from verified NGOs across Pakistan.</p>
+    </div>
+
+    <div class="pe-search">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input placeholder="Search events or city..." @bind="search" @bind:event="oninput" />
+    </div>
+
+    @if (Filtered.Count == 0)
+    {
+        <div class="empty">No upcoming events.</div>
+    }
+    else
+    {
+        <div class="pe-grid">
+            @foreach (var e in Filtered)
+            {
+                var isFull = e.SeatsAvailable > 0 && e.RegisteredCount >= e.SeatsAvailable;
+                <div class="pe-card">
+                    <div class="pe-card-top">
+                        <span class="pe-name">@e.Title</span>
+                        <span class="pe-badge @(isFull ? "full" : "open")">@(isFull ? "Full" : "Open")</span>
+                    </div>
+                    <div class="pe-ngo">by @(e.NGO?.Name ?? "NGO")</div>
+                    <div class="pe-meta">
+                        <span><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> @e.EventDate.ToString("MMM d, yyyy")</span>
+                        <span><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> @e.Location</span>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(e.Description))
+                    {
+                        <p class="pe-desc">@e.Description</p>
+                    }
+                    <div class="pe-foot">@e.RegisteredCount / @e.SeatsAvailable volunteers registered</div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<Event> events = new();
+    private string search = "";
+
+    private List<Event> Filtered =>
+        string.IsNullOrWhiteSpace(search)
+            ? events
+            : events.Where(e => e.Title.Contains(search, StringComparison.OrdinalIgnoreCase)
+                             || (e.Location ?? "").Contains(search, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    protected override async Task OnInitializedAsync()
+        => events = await EventService.GetAllUpcomingAsync();
+}
