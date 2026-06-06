@@ -3,6 +3,7 @@
 @using NekiConnect.Models
 @using NekiConnect.Services
 @inject NGOService NgoService
+@attribute [Authorize(Roles = "NGO")]
 @inject AuthenticationStateProvider AuthProvider
 
 <div class="mp-page">

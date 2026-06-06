@@ -22,24 +22,29 @@ namespace NekiConnect.Services
             var audience = _config["Jwt:Audience"];
             var expiryMin = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub,   user.Id),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
-                new Claim("FullName", user.FullName),
+                // REQUIRED for Blazor + Identity checks
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Name, user.Email ?? ""),
+                new Claim(ClaimTypes.Email, user.Email ?? ""),
+                new Claim("FullName", user.FullName ?? ""),
+
+                // IMPORTANT FOR ROLES
                 new Claim(ClaimTypes.Role, user.Role),
-                new Claim(JwtRegisteredClaimNames.Jti,   Guid.NewGuid().ToString())
+
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-            var creds = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
+            var keyBytes = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
 
             var token = new JwtSecurityToken(
                 issuer: issuer,
                 audience: audience,
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(expiryMin),
-                signingCredentials: creds);
+                signingCredentials: new SigningCredentials(keyBytes, SecurityAlgorithms.HmacSha256)
+            );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }

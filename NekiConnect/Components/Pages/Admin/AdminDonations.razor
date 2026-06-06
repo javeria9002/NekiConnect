@@ -3,6 +3,7 @@
 @using NekiConnect.Models
 @using NekiConnect.Services
 @inject AdminService AdminService
+@attribute [Authorize(Roles = "Admin")]
 
 <Navbar/>
 

@@ -18,6 +18,7 @@ namespace NekiConnect.Data
         public DbSet<Event> Events { get; set; }
         public DbSet<Beneficiary> Beneficiaries { get; set; }
         public DbSet<NgoBranch> NgoBranches { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

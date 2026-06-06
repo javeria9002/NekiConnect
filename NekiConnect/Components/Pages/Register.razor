@@ -35,8 +35,14 @@
 
             <p class="rl">Register as</p>
             <div class="tabs">
-                <button type="button" class="tab-btn @(ActiveTab == "donor" ? "active" : "")" @onclick='() => SwitchTab("donor")'>Donor / Volunteer</button>
-                <button type="button" class="tab-btn @(ActiveTab == "ngo" ? "active" : "")" @onclick='() => SwitchTab("ngo")'>NGO Organisation</button>
+                <button type="button" class="tab-btn @(ActiveTab == "donor" ? "active" : "")"
+                        @onclick='() => SwitchTab("donor")'>
+                    Donor / Volunteer
+                </button>
+                <button type="button" class="tab-btn @(ActiveTab == "ngo" ? "active" : "")"
+                        @onclick='() => SwitchTab("ngo")'>
+                    NGO Organisation
+                </button>
             </div>
 
             <!-- DONOR FORM -->
@@ -59,7 +65,7 @@
                         </div>
                         <div class="fg">
                             <label>Phone Number <span class="opt-note">(optional)</span></label>
-                            <InputText @bind-Value="DonorModel.Phone" placeholder="03001234567" />
+                            <InputText @bind-Value="DonorModel.Phone" placeholder="+92 300 0000000" />
                         </div>
                     </div>
 
@@ -69,16 +75,17 @@
                         <ValidationMessage For="() => DonorModel.City" class="field-err" />
                     </div>
 
-                    <div class="fg">
-                        <label>Password</label>
-                        <InputText type="password" @bind-Value="DonorModel.Password" placeholder="Strong password" />
-                        <ValidationMessage For="() => DonorModel.Password" class="field-err" />
-                    </div>
-
-                    <div class="fg">
-                        <label>Confirm Password</label>
-                        <InputText type="password" @bind-Value="DonorModel.ConfirmPassword" placeholder="Repeat password" />
-                        <ValidationMessage For="() => DonorModel.ConfirmPassword" class="field-err" />
+                    <div class="frow">
+                        <div class="fg">
+                            <label>Password</label>
+                            <InputText type="password" @bind-Value="DonorModel.Password" placeholder="Create a strong password" />
+                            <ValidationMessage For="() => DonorModel.Password" class="field-err" />
+                        </div>
+                        <div class="fg">
+                            <label>Confirm Password</label>
+                            <InputText type="password" @bind-Value="DonorModel.ConfirmPassword" placeholder="Repeat password" />
+                            <ValidationMessage For="() => DonorModel.ConfirmPassword" class="field-err" />
+                        </div>
                     </div>
 
                     <div class="trow">
@@ -90,7 +97,7 @@
                     <button type="submit" class="submit-btn" disabled="@IsSubmitting">
                         @(IsSubmitting ? "Creating..." : "Create Donor Account →")
                     </button>
-                    <p class="slink">Already have an account? <a href="/login">Sign In</a></p>
+                    <p class="slink">Already have an account? <a href="/login?tab=donor">Sign In</a></p>
                 </EditForm>
             }
 
@@ -116,7 +123,7 @@
                         </div>
                         <div class="fg">
                             <label>Phone</label>
-                            <InputText @bind-Value="NgoModel.Phone" placeholder="03001234567" />
+                            <InputText @bind-Value="NgoModel.Phone" placeholder="+92 300 0000000" />
                             <ValidationMessage For="() => NgoModel.Phone" class="field-err" />
                         </div>
                     </div>
@@ -138,6 +145,7 @@
                                 <option>Women Empowerment</option>
                                 <option>Child Welfare</option>
                                 <option>Environment</option>
+                                <option>All</option>
                                 <option>Other</option>
                             </InputSelect>
                             <ValidationMessage For="() => NgoModel.Category" class="field-err" />
@@ -150,16 +158,17 @@
                         <ValidationMessage For="() => NgoModel.RegistrationNumber" class="field-err" />
                     </div>
 
-                    <div class="fg">
-                        <label>Password</label>
-                        <InputText type="password" @bind-Value="NgoModel.Password" placeholder="Strong password" />
-                        <ValidationMessage For="() => NgoModel.Password" class="field-err" />
-                    </div>
-
-                    <div class="fg">
-                        <label>Confirm Password</label>
-                        <InputText type="password" @bind-Value="NgoModel.ConfirmPassword" placeholder="Repeat password" />
-                        <ValidationMessage For="() => NgoModel.ConfirmPassword" class="field-err" />
+                    <div class="frow">
+                        <div class="fg">
+                            <label>Password</label>
+                            <InputText type="password" @bind-Value="NgoModel.Password" placeholder="Create a strong password" />
+                            <ValidationMessage For="() => NgoModel.Password" class="field-err" />
+                        </div>
+                        <div class="fg">
+                            <label>Confirm Password</label>
+                            <InputText type="password" @bind-Value="NgoModel.ConfirmPassword" placeholder="Repeat password" />
+                            <ValidationMessage For="() => NgoModel.ConfirmPassword" class="field-err" />
+                        </div>
                     </div>
 
                     <div class="trow">
@@ -171,7 +180,7 @@
                     <button type="submit" class="submit-btn" disabled="@IsSubmitting">
                         @(IsSubmitting ? "Submitting..." : "Submit NGO Registration →")
                     </button>
-                    <p class="slink">Already have an account? <a href="/login">Sign In</a></p>
+                    <p class="slink">Already have an account? <a href="/login?tab=ngo">Sign In</a></p>
                 </EditForm>
             }
         </div>
@@ -186,6 +195,15 @@
 
     private DonorInputModel DonorModel = new();
     private NgoInputModel NgoModel = new();
+
+    [SupplyParameterFromQuery] private string? tab { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // ✅ Set tab from query string e.g. /register?tab=ngo
+        if (tab?.ToLower() == "ngo")
+            ActiveTab = "ngo";
+    }
 
     private void SwitchTab(string tab)
     {
@@ -221,10 +239,7 @@
         if (result.Succeeded)
         {
             await UserManager.AddToRoleAsync(user, "Donor");
-
-            // ✨ Send welcome email
             await EmailService.SendWelcomeEmailAsync(user.Email!, user.FullName);
-
             SuccessMessage = "Account created! Check your email for a welcome message. You can now login.";
             DonorModel = new DonorInputModel();
         }
@@ -277,10 +292,7 @@
                 CreatedAt = DateTime.UtcNow
             };
             await NgoService.RegisterNGOAsync(ngo);
-
-            // ✨ Send confirmation email (using welcome template)
             await EmailService.SendNgoRegistrationPendingEmailAsync(user.Email!, NgoModel.NgoName);
-
             SuccessMessage = "NGO registration submitted! Admin will review within 2–3 days. Check your email.";
         }
         else

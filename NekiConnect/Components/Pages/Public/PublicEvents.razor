@@ -1,64 +1,276 @@
 ﻿@page "/events"
+@rendermode InteractiveServer
 @using NekiConnect.Models
 @using NekiConnect.Services
+@using Microsoft.AspNetCore.Components.Authorization
 @inject EventService EventService
+@inject VolunteerService VolunteerService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
 
 <PageTitle>Events — NekiConnect</PageTitle>
 
 <Navbar />
 
-<div class="pe-page">
-    <div class="pe-head">
-        <h1 class="pe-title">Upcoming Events</h1>
-        <p class="pe-sub">Volunteer events and activities from verified NGOs across Pakistan.</p>
-    </div>
+@if (isLoading)
+{
+    <div class="loading">Loading events...</div>
+}
+else
+{
+    <div class="pe-page">
 
-    <div class="pe-search">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input placeholder="Search events or city..." @bind="search" @bind:event="oninput" />
-    </div>
+        <div class="pe-head">
+            <h1 class="pe-title">Upcoming Events</h1>
+            <p class="pe-sub">Volunteer your time, attend fundraisers, and participate in community activities across Pakistan.</p>
+        </div>
 
-    @if (Filtered.Count == 0)
-    {
-        <div class="empty">No upcoming events.</div>
-    }
-    else
-    {
-        <div class="pe-grid">
-            @foreach (var e in Filtered)
+        <!-- Search -->
+        <div class="pe-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input placeholder="Search events..." @bind="searchQuery" @bind:event="oninput" />
+        </div>
+
+        <!-- Category pills -->
+        <div class="pe-cats">
+            @foreach (var cat in categories)
             {
-                var isFull = e.SeatsAvailable > 0 && e.RegisteredCount >= e.SeatsAvailable;
-                <div class="pe-card">
-                    <div class="pe-card-top">
-                        <span class="pe-name">@e.Title</span>
-                        <span class="pe-badge @(isFull ? "full" : "open")">@(isFull ? "Full" : "Open")</span>
-                    </div>
-                    <div class="pe-ngo">by @(e.NGO?.Name ?? "NGO")</div>
-                    <div class="pe-meta">
-                        <span><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> @e.EventDate.ToString("MMM d, yyyy")</span>
-                        <span><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> @e.Location</span>
-                    </div>
-                    @if (!string.IsNullOrWhiteSpace(e.Description))
-                    {
-                        <p class="pe-desc">@e.Description</p>
-                    }
-                    <div class="pe-foot">@e.RegisteredCount / @e.SeatsAvailable volunteers registered</div>
-                </div>
+                var c = cat;
+                <button class="pe-cat @(selectedCategory == c ? "active" : "")"
+                        @onclick="() => selectedCategory = c">@c</button>
             }
         </div>
-    }
-</div>
+
+        <!-- Grid -->
+        <div class="pe-grid">
+            @if (FilteredEvents.Count == 0)
+            {
+                <div class="empty">No upcoming events found.</div>
+            }
+            else
+            {
+                @foreach (var ev in FilteredEvents)
+                {
+                    var eventId        = ev.Id;
+                    var eventTitle     = ev.Title;
+                    var eventDesc      = ev.Description ?? string.Empty;
+                    var eventDate      = ev.EventDate;
+                    var eventLoc       = ev.Location ?? "Pakistan";
+                    var eventSeats     = ev.SeatsAvailable;
+                    var eventReg       = ev.RegisteredCount;
+                    var eventNgo       = ev.NGO?.Name ?? "NGO";
+                    var isFull         = eventSeats > 0 && eventReg >= eventSeats;
+                    var spotsPct       = eventSeats > 0 ? (int)Math.Min(100, eventReg * 100 / eventSeats) : 0;
+                    var isApplying     = applyingEventId == eventId;
+                    var alreadyApplied = appliedEventIds.Contains(eventId);
+
+                    <div class="pe-card">
+                        <div class="pe-card-top">
+                            <span class="pe-type-badge">Volunteer</span>
+                            <span class="pe-badge @(isFull ? "full" : "open")">@(isFull ? "Full" : "Open")</span>
+                            <div class="pe-name">@eventTitle</div>
+                        </div>
+                        <div class="pe-body">
+                            <div class="pe-ngo">
+                                <svg width="11" height="11" fill="#16a34a" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622C17.176 19.29 21 14.591 21 9c0-1.067-.143-2.1-.382-3.016z"/></svg>
+                                @eventNgo
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(eventDesc))
+                            {
+                                <div class="pe-desc">@(eventDesc.Length > 100 ? eventDesc[..100] + "..." : eventDesc)</div>
+                            }
+
+                            <div class="pe-meta">
+                                <div class="pe-meta-item">
+                                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                    @eventDate.ToString("MMM d, yyyy")
+                                </div>
+                                <div class="pe-meta-item">
+                                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    @eventLoc
+                                </div>
+                            </div>
+
+                            <div class="pe-spots-bar">
+                                <div class="pe-spots-fill" style="width:@(spotsPct)%"></div>
+                            </div>
+                            <div class="pe-foot">@eventReg/@eventSeats spots filled</div>
+
+                            @if (alreadyApplied)
+                            {
+                                <div class="pe-applied">✓ Applied</div>
+                            }
+                            else if (isFull)
+                            {
+                                <button class="pe-apply-btn" disabled>Event Full</button>
+                            }
+                            else if (isApplying)
+                            {
+                                <div class="apply-form">
+                                    <div class="apply-form-title">Apply to Volunteer — @eventTitle</div>
+
+                                    <label class="apply-inp-label">Your Skills *</label>
+                                    <textarea class="apply-inp" rows="2"
+                                              placeholder="e.g. First aid, teaching, driving, cooking..."
+                                              @bind="formSkills" @bind:event="oninput"></textarea>
+                                    @if (showFormErrors && string.IsNullOrWhiteSpace(formSkills))
+                                    { <div class="apply-field-err">⚠ Please describe your skills</div> }
+
+                                    <label class="apply-inp-label">Availability *</label>
+                                    <textarea class="apply-inp" rows="2"
+                                              placeholder="e.g. Weekends, mornings, full day on May 5..."
+                                              @bind="formAvailability" @bind:event="oninput"></textarea>
+                                    @if (showFormErrors && string.IsNullOrWhiteSpace(formAvailability))
+                                    { <div class="apply-field-err">⚠ Please describe your availability</div> }
+
+                                    @if (!string.IsNullOrEmpty(formAlert))
+                                    {
+                                        <div class="@(formError ? "apply-alert-err" : "apply-alert-ok")">@formAlert</div>
+                                    }
+
+                                    <div class="apply-actions">
+                                        <button class="apply-cancel" @onclick="CancelApply">Cancel</button>
+                                        <button class="apply-submit" disabled="@isSubmitting"
+                                                @onclick="() => SubmitApplication(eventId)">
+                                            @(isSubmitting ? "Submitting..." : "Submit Application")
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <button class="pe-apply-btn" @onclick="() => OpenApplyForm(eventId)">
+                                    Apply to Volunteer
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
 
 @code {
-    private List<Event> events = new();
-    private string search = "";
+    private List<Event>  allEvents       = new();
+    private HashSet<int> appliedEventIds = new();
+    private bool   isLoading        = true;
+    private string searchQuery      = string.Empty;
+    private string selectedCategory = "All";
+    private string currentUserId    = string.Empty;
 
-    private List<Event> Filtered =>
-        string.IsNullOrWhiteSpace(search)
-            ? events
-            : events.Where(e => e.Title.Contains(search, StringComparison.OrdinalIgnoreCase)
-                             || (e.Location ?? "").Contains(search, StringComparison.OrdinalIgnoreCase)).ToList();
+    private List<string> categories = new() { "All", "Volunteer", "Gala", "Camp", "Environment", "Seminar" };
+
+    private int    applyingEventId  = 0;
+    private string formSkills       = string.Empty;
+    private string formAvailability = string.Empty;
+    private bool   showFormErrors   = false;
+    private bool   isSubmitting     = false;
+    private string formAlert        = string.Empty;
+    private bool   formError        = false;
+
+    private List<Event> FilteredEvents
+    {
+        get
+        {
+            var list = allEvents.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+                list = list.Where(e =>
+                    e.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    (e.Location ?? "").Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                    (e.NGO?.Name ?? "").Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+
+            if (selectedCategory != "All")
+                list = list.Where(e =>
+                    e.Title.Contains(selectedCategory, StringComparison.OrdinalIgnoreCase) ||
+                    (e.Description ?? "").Contains(selectedCategory, StringComparison.OrdinalIgnoreCase));
+
+            return list.ToList();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
-        => events = await EventService.GetAllUpcomingAsync();
+    {
+        allEvents = await EventService.GetAllUpcomingAsync();
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user      = await UserManager.GetUserAsync(authState.User);
+
+        if (user != null)
+        {
+            currentUserId = user.Id;
+            var myApps = await VolunteerService.GetApplicationsByUserIdAsync(user.Id);
+            appliedEventIds = myApps
+                .Where(a => a.EventId.HasValue)
+                .Select(a => a.EventId!.Value)
+                .ToHashSet();
+        }
+
+        isLoading = false;
+    }
+
+    private void OpenApplyForm(int eventId)
+    {
+        if (string.IsNullOrEmpty(currentUserId))
+        {
+            Navigation.NavigateTo("/login?returnUrl=/events");
+            return;
+        }
+        applyingEventId  = eventId;
+        formSkills       = string.Empty;
+        formAvailability = string.Empty;
+        showFormErrors   = false;
+        formAlert        = string.Empty;
+        formError        = false;
+    }
+
+    private void CancelApply()
+    {
+        applyingEventId = 0;
+        showFormErrors  = false;
+        formAlert       = string.Empty;
+    }
+
+    private async Task SubmitApplication(int eventId)
+    {
+        showFormErrors = true;
+        if (string.IsNullOrWhiteSpace(formSkills) ||
+            string.IsNullOrWhiteSpace(formAvailability)) return;
+
+        isSubmitting = true;
+        try
+        {
+            await VolunteerService.ApplyAsync(new VolunteerApplication
+            {
+                UserId       = currentUserId,
+                EventId      = eventId,
+                CampaignId   = null,
+                Skills       = formSkills.Trim(),
+                Availability = formAvailability.Trim(),
+                Status       = "Pending",
+                AppliedAt    = DateTime.UtcNow
+            });
+
+            appliedEventIds.Add(eventId);
+            formAlert       = "✓ Application submitted successfully!";
+            formError       = false;
+            applyingEventId = 0;
+
+            var e = allEvents.FirstOrDefault(x => x.Id == eventId);
+            if (e != null) e.RegisteredCount++;
+        }
+        catch (Exception ex)
+        {
+            formAlert = "Error: " + ex.Message;
+            formError = true;
+        }
+
+        isSubmitting = false;
+        StateHasChanged();
+    }
 }

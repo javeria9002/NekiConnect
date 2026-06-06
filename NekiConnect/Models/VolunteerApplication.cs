@@ -12,8 +12,8 @@ namespace NekiConnect.Models
         [Required]
         public string UserId { get; set; } = string.Empty;
 
-        [Required]
-        public int CampaignId { get; set; }
+        public int? CampaignId { get; set; }
+        public int? EventId { get; set; }
 
         [StringLength(300)]
         public string Skills { get; set; } = string.Empty;
@@ -37,5 +37,9 @@ namespace NekiConnect.Models
 
         [ForeignKey(nameof(CampaignId))]
         public Campaign? Campaign { get; set; }
+
+
+        [ForeignKey(nameof(EventId))]
+        public Event? Event { get; set; }
     }
 }

@@ -1,0 +1,15 @@
+﻿@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(Nav.Uri);
+
+        // ✅ Prevent redirect loop — don't redirect if already on login
+        if (!uri.LocalPath.StartsWith("/login") &&
+            !uri.LocalPath.StartsWith("/register"))
+        {
+            Nav.NavigateTo("/login", forceLoad: true);
+        }
+    }
+}

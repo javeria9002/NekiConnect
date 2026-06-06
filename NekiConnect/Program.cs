@@ -1,64 +1,110 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using NekiConnect.Components;
 using NekiConnect.Data;
 using NekiConnect.Models;
 using NekiConnect.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Database: factory (Blazor-safe) + scoped context (for Identity) ──
+//
+// DATABASE
+//
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<ApplicationDbContext>(sp =>
-    sp.GetRequiredService<IDbContextFactory<ApplicationDbContext>>().CreateDbContext());
+builder.Services.AddScoped(sp =>
+    sp.GetRequiredService<IDbContextFactory<ApplicationDbContext>>()
+      .CreateDbContext());
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+//
+// IDENTITY (DB ONLY)
+//
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+// ✅ Disable Identity's default cookie redirects — JWT handles everything
+builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.SignIn.RequireConfirmedAccount = false;
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 8;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireNonAlphanumeric = true;
-})
-.AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
-
-// ── JWT Bearer authentication (for API endpoints) ──
-builder.Services.AddAuthentication()
-    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+    options.Events.OnRedirectToLogin = ctx =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        ctx.Response.StatusCode = 401;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = ctx =>
+    {
+        ctx.Response.StatusCode = 403;
+        return Task.CompletedTask;
+    };
+});
+
+//
+// JWT AUTH
+//
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
-        };
-    });
+            context.Token = context.Request.Cookies["jwt"];
+            return Task.CompletedTask;
+        },
+        OnForbidden = context =>
+        {
+            context.Response.Redirect("/login?error=forbidden");
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            context.HandleResponse();
+            context.Response.Redirect("/login");
+            return Task.CompletedTask;
+        }
+    };
+});
 
-builder.Services.AddControllers();
-builder.Services.AddHttpContextAccessor();
+builder.Services.AddAuthorization();
 
-// Required for Razor Page login handler
+//
+// BLAZOR
+//
 builder.Services.AddRazorPages();
-
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddHttpClient();
+//
+// ✅ THIS CONNECTS JWT → BLAZOR AUTH SYSTEM
+//
+builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
 
-// ── Services (uncomment as you rebuild each file) ──
 // ── Services (combined clean version) ──
 builder.Services.AddScoped<NGOService>();
 
@@ -80,54 +126,21 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<PaymentService>();
 
-builder.Services.AddHttpClient();
-
 var app = builder.Build();
 
-// Seed roles + admin on startup
-using (var scope = app.Services.CreateScope())
-{
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-    foreach (var role in new[] { "Donor", "NGO", "Admin" })
-        if (!await roleManager.RoleExistsAsync(role))
-            await roleManager.CreateAsync(new IdentityRole(role));
-
-    const string adminEmail = "admin@nekiconnect.com";
-    const string adminPassword = "Admin@1234";
-
-    var adminUser = await userManager.FindByEmailAsync(adminEmail);
-    if (adminUser == null)
-    {
-        var newAdmin = new ApplicationUser
-        {
-            FullName = "Super Admin",
-            UserName = adminEmail,
-            Email = adminEmail,
-            Role = "Admin",
-            CreatedAt = DateTime.UtcNow
-        };
-        var result = await userManager.CreateAsync(newAdmin, adminPassword);
-        if (result.Succeeded)
-            await userManager.AddToRoleAsync(newAdmin, "Admin");
-    }
-}
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    app.UseHsts();
-}
-
+//
+// PIPELINE
+//
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseAntiforgery();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.UseAntiforgery();
+
 app.MapRazorPages();
+app.MapControllers();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

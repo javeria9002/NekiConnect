@@ -159,7 +159,10 @@ else
         if (!string.IsNullOrEmpty(userId))
         {
             var apps = await VolunteerService.GetApplicationsByUserIdAsync(userId);
-            appliedIds = apps.Select(a => a.CampaignId).ToHashSet();
+            appliedIds = apps
+                .Where(a => a.CampaignId.HasValue)
+                .Select(a => a.CampaignId!.Value)
+                .ToHashSet();
         }
     }
 

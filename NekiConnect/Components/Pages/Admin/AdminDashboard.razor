@@ -3,6 +3,8 @@
 @using NekiConnect.Services
 @inject AdminService AdminService
 @inject NavigationManager Nav
+@attribute [Authorize(Roles = "Admin")]
+
 
 <Navbar/>
 

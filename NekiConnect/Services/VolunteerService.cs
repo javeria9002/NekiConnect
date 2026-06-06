@@ -13,7 +13,7 @@ namespace NekiConnect.Services
             _factory = factory;
         }
 
-        // ── NGO: all applications ──
+        // ── NGO: all applications (campaign + event) ──
         public async Task<List<VolunteerApplication>> GetApplicationsByNgoIdAsync(int ngoId)
         {
             await using var db = await _factory.CreateDbContextAsync();
@@ -21,7 +21,9 @@ namespace NekiConnect.Services
             return await db.VolunteerApplications
                 .Include(v => v.User)
                 .Include(v => v.Campaign)
-                .Where(v => v.Campaign != null && v.Campaign.NgoId == ngoId)
+                .Include(v => v.Event)
+                .Where(v => (v.Campaign != null && v.Campaign.NgoId == ngoId) ||
+                            (v.Event != null && v.Event.NgoId == ngoId))
                 .OrderByDescending(v => v.AppliedAt)
                 .ToListAsync();
         }
@@ -34,6 +36,8 @@ namespace NekiConnect.Services
             return await db.VolunteerApplications
                 .Include(v => v.Campaign)
                     .ThenInclude(c => c!.NGO)
+                .Include(v => v.Event)
+                    .ThenInclude(e => e!.NGO)
                 .Where(v => v.UserId == userId)
                 .OrderByDescending(v => v.AppliedAt)
                 .ToListAsync();
@@ -51,7 +55,19 @@ namespace NekiConnect.Services
                 .ToListAsync();
         }
 
-        // ── Check duplicate application ──
+        // ── Event: applications ──
+        public async Task<List<VolunteerApplication>> GetApplicationsByEventIdAsync(int eventId)
+        {
+            await using var db = await _factory.CreateDbContextAsync();
+
+            return await db.VolunteerApplications
+                .Include(v => v.User)
+                .Where(v => v.EventId == eventId)
+                .OrderByDescending(v => v.AppliedAt)
+                .ToListAsync();
+        }
+
+        // ── Check duplicate campaign application ──
         public async Task<bool> HasAppliedAsync(string userId, int campaignId)
         {
             await using var db = await _factory.CreateDbContextAsync();
@@ -60,7 +76,16 @@ namespace NekiConnect.Services
                 .AnyAsync(v => v.UserId == userId && v.CampaignId == campaignId);
         }
 
-        // ── Apply for campaign ──
+        // ── Check duplicate event application ──
+        public async Task<bool> HasAppliedToEventAsync(string userId, int eventId)
+        {
+            await using var db = await _factory.CreateDbContextAsync();
+
+            return await db.VolunteerApplications
+                .AnyAsync(v => v.UserId == userId && v.EventId == eventId);
+        }
+
+        // ── Apply for campaign or event ──
         public async Task ApplyAsync(VolunteerApplication application)
         {
             await using var db = await _factory.CreateDbContextAsync();

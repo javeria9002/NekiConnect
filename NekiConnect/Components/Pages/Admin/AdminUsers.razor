@@ -4,6 +4,7 @@
 @using NekiConnect.Services
 @inject AdminService AdminService
 @inject UserService UserService
+@attribute [Authorize(Roles = "Admin")]
 
 <Navbar/>
 

@@ -5,6 +5,7 @@
 @inject NGOService NgoService
 @inject EventService EventService
 @inject AuthenticationStateProvider AuthProvider
+@attribute [Authorize(Roles = "NGO")]
 
 <Navbar/>
 

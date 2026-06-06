@@ -14,6 +14,7 @@
         <li><a href="/campaigns" class="@IsActive("/campaigns")">Campaigns</a></li>
         <li><a href="/events" class="@IsActive("/events")">Events</a></li>
         <li><a href="/blogs" class="@IsActive("/blogs")">Blogs</a></li>
+        <li><a href="/ngos" class="@IsActive("/ngos")">NGOs</a></li>
         <li>
             <div class="portals-wrap">
                 <button class="portals-btn @(PortalsOpen ? "open" : "")" @onclick="TogglePortals">
@@ -79,7 +80,6 @@
                 </div>
             </div>
         </li>
-        <li><a href="/ngos" class="@IsActive("/ngos")">NGOs</a></li>
     </ul>
 
     <div class="nav-actions">
