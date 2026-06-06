@@ -6,63 +6,96 @@ namespace NekiConnect.Services
 {
     public class BlogService
     {
-        private readonly ApplicationDbContext _db;
+        private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-        public BlogService(ApplicationDbContext db)
+        public BlogService(IDbContextFactory<ApplicationDbContext> factory)
         {
-            _db = db;
+            _factory = factory;
         }
 
-        public async Task<List<BlogPost>> GetAllBlogsAsync()
+        // ── NGO specific blogs ──
+        public async Task<List<BlogPost>> GetByNgoIdAsync(int ngoId)
         {
-            return await _db.BlogPosts
-                .Include(b => b.NGO)
-                .OrderByDescending(b => b.CreatedAt)
-                .ToListAsync();
-        }
+            await using var db = await _factory.CreateDbContextAsync();
 
-        public async Task<List<BlogPost>> GetBlogsByNgoIdAsync(int ngoId)
-        {
-            return await _db.BlogPosts
+            return await db.BlogPosts
                 .Where(b => b.NgoId == ngoId)
                 .OrderByDescending(b => b.CreatedAt)
                 .ToListAsync();
         }
 
-        public async Task<BlogPost?> GetBlogByIdAsync(int id)
+        // ── Admin: all blogs ──
+        public async Task<List<BlogPost>> GetAllBlogsAsync()
         {
-            return await _db.BlogPosts
+            await using var db = await _factory.CreateDbContextAsync();
+
+            return await db.BlogPosts
+                .Include(b => b.NGO)
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync();
+        }
+
+        // ── Public published blogs ──
+        public async Task<List<BlogPost>> GetAllPublishedAsync()
+        {
+            await using var db = await _factory.CreateDbContextAsync();
+
+            return await db.BlogPosts
+                .Include(b => b.NGO)
+                .Where(b => b.Status == "Published")
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync();
+        }
+
+        // ── Single blog ──
+        public async Task<BlogPost?> GetByIdAsync(int id)
+        {
+            await using var db = await _factory.CreateDbContextAsync();
+
+            return await db.BlogPosts
                 .Include(b => b.NGO)
                 .FirstOrDefaultAsync(b => b.Id == id);
         }
 
-        public async Task CreateBlogAsync(BlogPost blog)
+        // ── Create ──
+        public async Task CreateAsync(BlogPost post)
         {
-            blog.CreatedAt = DateTime.UtcNow;
-            _db.BlogPosts.Add(blog);
-            await _db.SaveChangesAsync();
+            await using var db = await _factory.CreateDbContextAsync();
+
+            post.CreatedAt = DateTime.UtcNow;
+
+            db.BlogPosts.Add(post);
+            await db.SaveChangesAsync();
         }
 
-        public async Task UpdateBlogAsync(BlogPost updated)
+        // ── Update ──
+        public async Task UpdateAsync(BlogPost post)
         {
-            var blog = await _db.BlogPosts.FindAsync(updated.Id);
-            if (blog is null) return;
+            await using var db = await _factory.CreateDbContextAsync();
 
-            blog.Title = updated.Title;
-            blog.Content = updated.Content;
-            blog.ImageUrl = updated.ImageUrl;
-            blog.Category = updated.Category; // ── ADDED ──
-
-            await _db.SaveChangesAsync();
+            db.BlogPosts.Update(post);
+            await db.SaveChangesAsync();
         }
 
-        public async Task DeleteBlogAsync(int id)
+        // ── Delete ──
+        public async Task DeleteAsync(int id)
         {
-            var blog = await _db.BlogPosts.FindAsync(id);
-            if (blog is null) return;
+            await using var db = await _factory.CreateDbContextAsync();
 
-            _db.BlogPosts.Remove(blog);
-            await _db.SaveChangesAsync();
+            var post = await db.BlogPosts.FindAsync(id);
+            if (post != null)
+            {
+                db.BlogPosts.Remove(post);
+                await db.SaveChangesAsync();
+            }
+        }
+
+        // ── Stats ──
+        public async Task<int> GetCountAsync(int ngoId)
+        {
+            await using var db = await _factory.CreateDbContextAsync();
+
+            return await db.BlogPosts.CountAsync(b => b.NgoId == ngoId);
         }
     }
 }

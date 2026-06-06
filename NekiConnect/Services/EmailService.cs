@@ -1,7 +1,6 @@
 ﻿using sib_api_v3_sdk.Api;
 using sib_api_v3_sdk.Client;
 using sib_api_v3_sdk.Model;
-using SystemTask = System.Threading.Tasks.Task;
 
 namespace NekiConnect.Services
 {
@@ -17,7 +16,8 @@ namespace NekiConnect.Services
             _api = new TransactionalEmailsApi();
         }
 
-        public async System.Threading.Tasks.Task<bool> SendAsync(string toEmail, string toName, string subject, string htmlContent)
+        // ── Core sender ──
+        public async Task<bool> SendAsync(string toEmail, string toName, string subject, string htmlContent)
         {
             try
             {
@@ -46,7 +46,8 @@ namespace NekiConnect.Services
             }
         }
 
-        public System.Threading.Tasks.Task<bool> SendWelcomeEmailAsync(string toEmail, string toName)
+        // ── Welcome email ──
+        public Task<bool> SendWelcomeEmailAsync(string toEmail, string toName)
         {
             var html = $@"
                 <h2>Welcome to NekiConnect, {toName}! 💚</h2>
@@ -58,77 +59,88 @@ namespace NekiConnect.Services
             return SendAsync(toEmail, toName, "Welcome to NekiConnect!", html);
         }
 
-        public System.Threading.Tasks.Task<bool> SendDonationReceiptAsync(string toEmail, string toName, decimal amount, string targetTitle)
+        // ── NGO registration PENDING (feature/javeria added this - KEEP IT) ──
+        public Task<bool> SendNgoRegistrationPendingEmailAsync(string toEmail, string ngoName)
+        {
+            var html = $@"
+                <div style='font-family:Segoe UI,sans-serif;max-width:600px;margin:auto;padding:32px;'>
+                    <h2 style='color:#16a34a;'>Thank you for registering, {ngoName}! 🏢</h2>
+                    <p>Your NGO registration has been <strong>received successfully</strong> and is now
+                    <strong>pending review</strong>.</p>
+
+                    <div style='background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px;margin:20px 0;'>
+                        <p style='margin:0;font-weight:600;color:#92400e;'>⏳ Status: Pending Approval</p>
+                        <p style='margin-top:8px;font-size:13px;color:#92400e;'>
+                            Approval usually takes 1–2 business days.
+                        </p>
+                    </div>
+
+                    <p style='color:#6b7280;font-size:13px;'>NekiConnect — Connecting hearts to causes.</p>
+                </div>";
+
+            return SendAsync(toEmail, ngoName, "NGO Registration Received", html);
+        }
+
+        // ── Donation receipt ──
+        public Task<bool> SendDonationReceiptAsync(string toEmail, string toName, decimal amount, string targetTitle)
         {
             var html = $@"
                 <div style='font-family:Segoe UI,sans-serif;max-width:600px;margin:auto;padding:32px;'>
                     <h2 style='color:#16a34a;'>Thank you, {toName}! 💚</h2>
-                    <p style='color:#374151;'>Your donation has been received successfully.</p>
-                    <div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin:20px 0;'>
-                        <table style='width:100%;'>
-                            <tr><td style='color:#6b7280;padding:6px 0;'>Cause</td><td style='font-weight:600;color:#111827;'>{targetTitle}</td></tr>
-                            <tr><td style='color:#6b7280;padding:6px 0;'>Amount</td><td style='font-weight:700;color:#16a34a;font-size:18px;'>PKR {amount:N0}</td></tr>
-                            <tr><td style='color:#6b7280;padding:6px 0;'>Date</td><td style='color:#111827;'>{DateTime.Now:MMM d, yyyy}</td></tr>
-                        </table>
-                    </div>
-                    <p style='color:#6b7280;font-size:13px;'>Your support makes a real difference. ❤️</p>
-                    <hr/>
-                    <p style='font-size:12px;color:#9ca3af'>NekiConnect — Connecting hearts to causes.</p>
+                    <p>Your donation has been received successfully.</p>
+
+                    <table style='width:100%;margin:20px 0;'>
+                        <tr><td>Cause</td><td>{targetTitle}</td></tr>
+                        <tr><td>Amount</td><td><b>PKR {amount:N0}</b></td></tr>
+                        <tr><td>Date</td><td>{DateTime.Now:MMM d, yyyy}</td></tr>
+                    </table>
+
+                    <p style='font-size:13px;'>Your support makes a difference ❤️</p>
                 </div>";
 
-            return SendAsync(toEmail, toName, "Donation Receipt — NekiConnect", html);
+            return SendAsync(toEmail, toName, "Donation Receipt", html);
         }
 
-        public System.Threading.Tasks.Task<bool> SendNgoApprovedEmailAsync(string toEmail, string ngoName)
+        // ── NGO approved ──
+        public Task<bool> SendNgoApprovedEmailAsync(string toEmail, string ngoName)
         {
             var html = $@"
-                <h2>Congratulations! 🎉</h2>
-                <p>Your NGO <strong>{ngoName}</strong> has been approved on NekiConnect.</p>
-                <p>You can now log in and start creating campaigns.</p>
-                <hr/>
-                <p style='font-size:12px;color:#9ca3af'>NekiConnect Admin Team</p>";
+                <h2>Congratulations 🎉</h2>
+                <p>Your NGO <b>{ngoName}</b> has been approved.</p>";
 
-            return SendAsync(toEmail, ngoName, "Your NGO has been approved!", html);
+            return SendAsync(toEmail, ngoName, "NGO Approved", html);
         }
 
-        public System.Threading.Tasks.Task<bool> SendNgoRejectedEmailAsync(string toEmail, string ngoName, string reason)
+        // ── NGO rejected ──
+        public Task<bool> SendNgoRejectedEmailAsync(string toEmail, string ngoName, string reason)
         {
             var html = $@"
                 <h2>Registration Update</h2>
-                <p>Hello {ngoName},</p>
-                <p>Your NGO registration could not be approved at this time.</p>
-                <p><strong>Reason:</strong> {reason}</p>
-                <hr/>
-                <p style='font-size:12px;color:#9ca3af'>NekiConnect Admin Team</p>";
+                <p>Hello {ngoName}, your NGO was not approved.</p>
+                <p><b>Reason:</b> {reason}</p>";
 
             return SendAsync(toEmail, ngoName, "NGO Registration Update", html);
         }
 
-        public System.Threading.Tasks.Task<bool> SendVolunteerStatusAsync(string toEmail, string toName, string campaignTitle, bool accepted)
+        // ── Volunteer status ──
+        public Task<bool> SendVolunteerStatusAsync(string toEmail, string toName, string campaignTitle, bool accepted)
         {
-            string subject, html;
+            string subject;
+            string html;
+
             if (accepted)
             {
-                subject = "Your volunteer application was accepted!";
+                subject = "Volunteer Accepted 🎉";
                 html = $@"
-                    <div style='font-family:Segoe UI,sans-serif;max-width:600px;margin:auto;padding:32px;'>
-                        <h2 style='color:#16a34a;'>Congratulations, {toName}! 🎉</h2>
-                        <p>You have been accepted as a volunteer for <strong>{campaignTitle}</strong>.</p>
-                        <hr/>
-                        <p style='font-size:12px;color:#9ca3af'>NekiConnect</p>
-                    </div>";
+                    <h2>Congratulations {toName}!</h2>
+                    <p>You are selected for <b>{campaignTitle}</b>.</p>";
             }
             else
             {
                 subject = "Volunteer Application Update";
                 html = $@"
-                    <div style='font-family:Segoe UI,sans-serif;max-width:600px;margin:auto;padding:32px;'>
-                        <h2>Hi {toName},</h2>
-                        <p>Your application for <strong>{campaignTitle}</strong> was not selected this time.</p>
-                        <p>Don't give up — there are many other opportunities!</p>
-                        <hr/>
-                        <p style='font-size:12px;color:#9ca3af'>NekiConnect</p>
-                    </div>";
+                    <h2>Hi {toName}</h2>
+                    <p>Not selected for <b>{campaignTitle}</b>.</p>";
             }
 
             return SendAsync(toEmail, toName, subject, html);

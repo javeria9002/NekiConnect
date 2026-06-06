@@ -10,8 +10,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+// ── Database: factory (Blazor-safe) + scoped context (for Identity) ──
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<ApplicationDbContext>(sp =>
+    sp.GetRequiredService<IDbContextFactory<ApplicationDbContext>>().CreateDbContext());
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -55,29 +59,28 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddHttpClient();
 
 // ── Services (uncomment as you rebuild each file) ──
+// ── Services (combined clean version) ──
 builder.Services.AddScoped<NGOService>();
-//builder.Services.AddScoped<FundraisingService>();
+
+// Core services
 builder.Services.AddScoped<CampaignService>();
 builder.Services.AddScoped<DonationService>();
 builder.Services.AddScoped<VolunteerService>();
-//builder.Services.AddScoped<BlogService>();
-//builder.Services.AddScoped<BeneficiaryService>();
 builder.Services.AddScoped<UserService>();
-//builder.Services.AddScoped<AdminService>();
-builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<BranchService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<BlogService>();
+builder.Services.AddScoped<BeneficiaryService>();
+builder.Services.AddScoped<AdminService>();
+
+// Infrastructure
+builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<PaymentService>();
 
 builder.Services.AddHttpClient();
-
-// ── JWT ──
-builder.Services.AddScoped<TokenService>();
-
-// ── Email (Brevo) ──
-builder.Services.AddScoped<EmailService>();
-
-// ── Payment (Stripe) ──
-builder.Services.AddScoped<PaymentService>();
 
 var app = builder.Build();
 

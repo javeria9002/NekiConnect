@@ -279,7 +279,7 @@
             await NgoService.RegisterNGOAsync(ngo);
 
             // ✨ Send confirmation email (using welcome template)
-            await EmailService.SendWelcomeEmailAsync(user.Email!, NgoModel.NgoName);
+            await EmailService.SendNgoRegistrationPendingEmailAsync(user.Email!, NgoModel.NgoName);
 
             SuccessMessage = "NGO registration submitted! Admin will review within 2–3 days. Check your email.";
         }

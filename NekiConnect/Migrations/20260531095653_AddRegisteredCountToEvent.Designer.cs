@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NekiConnect.Data;
 
@@ -11,9 +12,11 @@ using NekiConnect.Data;
 namespace NekiConnect.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260531095653_AddRegisteredCountToEvent")]
+    partial class AddRegisteredCountToEvent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -234,53 +237,6 @@ namespace NekiConnect.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
-                });
-
-            modelBuilder.Entity("NekiConnect.Models.Beneficiary", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AidType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<int>("NgoId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Province")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NgoId");
-
-                    b.ToTable("Beneficiaries");
                 });
 
             modelBuilder.Entity("NekiConnect.Models.BlogPost", b =>
@@ -562,44 +518,6 @@ namespace NekiConnect.Migrations
                     b.ToTable("NGOs");
                 });
 
-            modelBuilder.Entity("NekiConnect.Models.NgoBranch", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
-                    b.Property<string>("BranchName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<double>("Latitude")
-                        .HasColumnType("float");
-
-                    b.Property<double>("Longitude")
-                        .HasColumnType("float");
-
-                    b.Property<int>("NgoId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NgoId");
-
-                    b.ToTable("NgoBranches");
-                });
-
             modelBuilder.Entity("NekiConnect.Models.VolunteerApplication", b =>
                 {
                     b.Property<int>("Id")
@@ -696,17 +614,6 @@ namespace NekiConnect.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("NekiConnect.Models.Beneficiary", b =>
-                {
-                    b.HasOne("NekiConnect.Models.NGO", "NGO")
-                        .WithMany()
-                        .HasForeignKey("NgoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("NGO");
-                });
-
             modelBuilder.Entity("NekiConnect.Models.BlogPost", b =>
                 {
                     b.HasOne("NekiConnect.Models.NGO", "NGO")
@@ -748,16 +655,6 @@ namespace NekiConnect.Migrations
                 });
 
             modelBuilder.Entity("NekiConnect.Models.Event", b =>
-                {
-                    b.HasOne("NekiConnect.Models.NGO", "NGO")
-                        .WithMany()
-                        .HasForeignKey("NgoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("NGO");
-                });
-            modelBuilder.Entity("NekiConnect.Models.NgoBranch", b =>
                 {
                     b.HasOne("NekiConnect.Models.NGO", "NGO")
                         .WithMany()

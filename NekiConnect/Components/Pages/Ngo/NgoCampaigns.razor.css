@@ -1,0 +1,390 @@
+﻿.cp-page {
+    padding: 1.75rem 2rem;
+}
+
+/* Header */
+.cp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.cp-title {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 .25rem;
+}
+
+.cp-sub {
+    font-size: .9rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.btn-new {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: .6rem 1.3rem;
+    font-size: .88rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s;
+}
+
+    .btn-new:hover {
+        background: #15803d;
+    }
+
+/* Stat cards */
+.stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.4rem;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+
+.stat-num {
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+    .stat-num.green {
+        color: #16a34a;
+    }
+
+    .stat-num.blue {
+        color: #2563eb;
+    }
+
+    .stat-num.purple {
+        color: #7c3aed;
+    }
+
+.stat-lbl {
+    font-size: .85rem;
+    color: #6b7280;
+    margin-top: .4rem;
+}
+
+/* Form */
+.form-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.6rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    margin-bottom: 1.5rem;
+}
+
+.form-head {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 1.25rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.fcol {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+}
+
+    .fcol.full {
+        grid-column: 1 / -1;
+    }
+
+    .fcol label {
+        font-size: .78rem;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .fcol input, .fcol textarea {
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        padding: .6rem .8rem;
+        font-size: .88rem;
+        color: #111827;
+        outline: none;
+        transition: border-color .15s;
+        width: 100%;
+        box-sizing: border-box;
+        resize: vertical;
+    }
+
+        .fcol input:focus, .fcol textarea:focus {
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px #dcfce7;
+        }
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .75rem;
+    margin-top: 1.25rem;
+}
+
+.btn-ghost {
+    background: transparent;
+    border: none;
+    color: #374151;
+    font-size: .88rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: .55rem .9rem;
+}
+
+    .btn-ghost:hover {
+        color: #111827;
+    }
+
+.btn-save {
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: .55rem 1.4rem;
+    font-size: .88rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .btn-save:hover {
+        background: #15803d;
+    }
+
+/* Search */
+.search-wrap {
+    position: relative;
+    margin-bottom: 1.25rem;
+    max-width: 100%;
+}
+
+    .search-wrap svg {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+    }
+
+.search-inp {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: .7rem .9rem .7rem 2.6rem;
+    font-size: .9rem;
+    outline: none;
+    background: #fff;
+}
+
+    .search-inp:focus {
+        border-color: #16a34a;
+        box-shadow: 0 0 0 3px #dcfce7;
+    }
+
+/* Campaign cards */
+.camp-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    margin-bottom: 1.1rem;
+}
+
+.camp-row {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.camp-left {
+    flex: 1;
+    min-width: 0;
+}
+
+.camp-title-row {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.camp-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.badge {
+    font-size: .7rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: .2rem .7rem;
+}
+
+.badge-active {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.badge-done {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.badge-days {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.camp-stats {
+    display: flex;
+    gap: 4rem;
+    margin-bottom: 1.1rem;
+}
+
+.cstat {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+}
+
+.cstat-lbl {
+    font-size: .76rem;
+    color: #9ca3af;
+}
+
+.cstat-val {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+    .cstat-val.green {
+        color: #16a34a;
+    }
+
+.prog-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: .78rem;
+    color: #6b7280;
+    margin-bottom: .35rem;
+}
+
+.prog-track {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.prog-fill {
+    height: 100%;
+    background: #16a34a;
+    border-radius: 999px;
+    transition: width .4s ease;
+}
+
+/* Actions (vertical stack on right) */
+.camp-actions {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    flex-shrink: 0;
+}
+
+.act {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    justify-content: center;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    padding: .4rem .9rem;
+    font-size: .82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    min-width: 92px;
+}
+
+    .act.view {
+        color: #2563eb;
+    }
+
+        .act.view:hover {
+            border-color: #93c5fd;
+            background: #eff6ff;
+        }
+
+    .act.edit {
+        color: #374151;
+    }
+
+        .act.edit:hover {
+            border-color: #9ca3af;
+            background: #f9fafb;
+        }
+
+    .act.del {
+        color: #dc2626;
+        border-color: #fecaca;
+    }
+
+        .act.del:hover {
+            background: #fef2f2;
+        }
+
+.empty {
+    background: #fff;
+    border-radius: 14px;
+    padding: 2.5rem;
+    text-align: center;
+    color: #9ca3af;
+}
+
+@media (max-width: 900px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .camp-row {
+        flex-direction: column;
+    }
+
+    .camp-actions {
+        flex-direction: row;
+        width: 100%;
+    }
+
+    .camp-stats {
+        gap: 2rem;
+    }
+}

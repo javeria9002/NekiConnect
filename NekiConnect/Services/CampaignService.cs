@@ -6,65 +6,98 @@ namespace NekiConnect.Services
 {
     public class CampaignService
     {
-        private readonly ApplicationDbContext _db;
+        private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
-        public CampaignService(ApplicationDbContext db) { _db = db; }
+        public CampaignService(IDbContextFactory<ApplicationDbContext> factory)
+        {
+            _factory = factory;
+        }
 
+        // ── All active/upcoming campaigns ──
         public async Task<List<Campaign>> GetAllActiveCampaignsAsync()
         {
-            return await _db.Campaigns
+            await using var db = await _factory.CreateDbContextAsync();
+
+            return await db.Campaigns
                 .Include(c => c.NGO)
                 .Where(c => c.Status == "Upcoming")
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
         }
 
+        // ── Single campaign ──
         public async Task<Campaign?> GetCampaignByIdAsync(int id)
         {
-            return await _db.Campaigns
+            await using var db = await _factory.CreateDbContextAsync();
+
+            return await db.Campaigns
                 .Include(c => c.NGO)
                 .Include(c => c.Donations)
+                .Include(c => c.VolunteerApplications)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 
+        // ── NGO campaigns ──
         public async Task<List<Campaign>> GetCampaignsByNgoIdAsync(int ngoId)
         {
-            return await _db.Campaigns
+            await using var db = await _factory.CreateDbContextAsync();
+
+            return await db.Campaigns
+                .Include(c => c.Donations)
+                .Include(c => c.VolunteerApplications)
                 .Where(c => c.NgoId == ngoId)
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
         }
 
-        public async Task<Campaign> CreateCampaignAsync(Campaign campaign)
+        // ── Create campaign ──
+        public async Task CreateCampaignAsync(Campaign campaign)
         {
-            _db.Campaigns.Add(campaign);
-            await _db.SaveChangesAsync();
-            return campaign;
+            await using var db = await _factory.CreateDbContextAsync();
+
+            campaign.CreatedAt = DateTime.UtcNow;
+
+            if (string.IsNullOrEmpty(campaign.Status))
+                campaign.Status = "Upcoming";
+
+            db.Campaigns.Add(campaign);
+            await db.SaveChangesAsync();
         }
 
+        // ── Update campaign ──
         public async Task UpdateCampaignAsync(Campaign campaign)
         {
-            _db.Campaigns.Update(campaign);
-            await _db.SaveChangesAsync();
+            await using var db = await _factory.CreateDbContextAsync();
+
+            db.Campaigns.Update(campaign);
+            await db.SaveChangesAsync();
         }
 
+        // ── Delete campaign ──
         public async Task DeleteCampaignAsync(int id)
         {
-            var campaign = await _db.Campaigns.FindAsync(id);
+            await using var db = await _factory.CreateDbContextAsync();
+
+            var campaign = await db.Campaigns.FindAsync(id);
+
             if (campaign != null)
             {
-                _db.Campaigns.Remove(campaign);
-                await _db.SaveChangesAsync();
+                db.Campaigns.Remove(campaign);
+                await db.SaveChangesAsync();
             }
         }
 
+        // ── Donation updates ──
         public async Task UpdateRaisedAmountAsync(int campaignId, decimal amount)
         {
-            var campaign = await _db.Campaigns.FindAsync(campaignId);
+            await using var db = await _factory.CreateDbContextAsync();
+
+            var campaign = await db.Campaigns.FindAsync(campaignId);
+
             if (campaign != null)
             {
                 campaign.RaisedAmount += amount;
-                await _db.SaveChangesAsync();
+                await db.SaveChangesAsync();
             }
         }
     }
