@@ -1,9 +1,8 @@
 ﻿@page "/admin/users"
 @layout AdminLayout
 @using NekiConnect.Models
-@using NekiConnect.Services
-@inject AdminService AdminService
-@inject UserService UserService
+@inject IAdminService AdminService
+@inject IUserService UserService
 @attribute [Authorize(Roles = "Admin")]
 
 <Navbar/>

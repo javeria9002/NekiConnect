@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NekiConnect.Data;
 using NekiConnect.Models;
+using NekiConnect.Interfaces;
 
 namespace NekiConnect.Services
 {
-    public class CampaignService
+    public class CampaignService : ICampaignService
     {
         private readonly IDbContextFactory<ApplicationDbContext> _factory;
 

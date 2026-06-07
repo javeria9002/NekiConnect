@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using NekiConnect.Services;
+using NekiConnect.Interfaces;
 
 namespace NekiConnect.Controllers
 {
@@ -7,9 +7,9 @@ namespace NekiConnect.Controllers
     [Route("api/email-test")]
     public class EmailTestController : ControllerBase
     {
-        private readonly EmailService _emailService;
+        private readonly IEmailService _emailService;
 
-        public EmailTestController(EmailService emailService)
+        public EmailTestController(IEmailService emailService)
         {
             _emailService = emailService;
         }

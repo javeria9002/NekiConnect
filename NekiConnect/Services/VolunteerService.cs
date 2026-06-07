@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NekiConnect.Data;
 using NekiConnect.Models;
+using NekiConnect.Interfaces;
 
 namespace NekiConnect.Services
 {
-    public class VolunteerService
+    public class VolunteerService : IVolunteerService
     {
         private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
@@ -13,11 +14,9 @@ namespace NekiConnect.Services
             _factory = factory;
         }
 
-        // ── NGO: all applications (campaign + event) ──
         public async Task<List<VolunteerApplication>> GetApplicationsByNgoIdAsync(int ngoId)
         {
             await using var db = await _factory.CreateDbContextAsync();
-
             return await db.VolunteerApplications
                 .Include(v => v.User)
                 .Include(v => v.Campaign)
@@ -28,11 +27,9 @@ namespace NekiConnect.Services
                 .ToListAsync();
         }
 
-        // ── User: my applications ──
         public async Task<List<VolunteerApplication>> GetApplicationsByUserIdAsync(string userId)
         {
             await using var db = await _factory.CreateDbContextAsync();
-
             return await db.VolunteerApplications
                 .Include(v => v.Campaign)
                     .ThenInclude(c => c!.NGO)
@@ -43,11 +40,9 @@ namespace NekiConnect.Services
                 .ToListAsync();
         }
 
-        // ── Campaign: applications ──
         public async Task<List<VolunteerApplication>> GetApplicationsByCampaignIdAsync(int campaignId)
         {
             await using var db = await _factory.CreateDbContextAsync();
-
             return await db.VolunteerApplications
                 .Include(v => v.User)
                 .Where(v => v.CampaignId == campaignId)
@@ -55,11 +50,9 @@ namespace NekiConnect.Services
                 .ToListAsync();
         }
 
-        // ── Event: applications ──
         public async Task<List<VolunteerApplication>> GetApplicationsByEventIdAsync(int eventId)
         {
             await using var db = await _factory.CreateDbContextAsync();
-
             return await db.VolunteerApplications
                 .Include(v => v.User)
                 .Where(v => v.EventId == eventId)
@@ -67,25 +60,21 @@ namespace NekiConnect.Services
                 .ToListAsync();
         }
 
-        // ── Check duplicate campaign application ──
         public async Task<bool> HasAppliedAsync(string userId, int campaignId)
         {
             await using var db = await _factory.CreateDbContextAsync();
-
             return await db.VolunteerApplications
                 .AnyAsync(v => v.UserId == userId && v.CampaignId == campaignId);
         }
 
-        // ── Check duplicate event application ──
         public async Task<bool> HasAppliedToEventAsync(string userId, int eventId)
         {
             await using var db = await _factory.CreateDbContextAsync();
-
             return await db.VolunteerApplications
                 .AnyAsync(v => v.UserId == userId && v.EventId == eventId);
         }
 
-        // ── Apply for campaign or event ──
+        // ✅ Fixed — increments RegisteredCount on event
         public async Task ApplyAsync(VolunteerApplication application)
         {
             await using var db = await _factory.CreateDbContextAsync();
@@ -94,16 +83,22 @@ namespace NekiConnect.Services
             application.AppliedAt = DateTime.UtcNow;
 
             db.VolunteerApplications.Add(application);
+
+            // ✅ Increment event spot count in DB
+            if (application.EventId.HasValue)
+            {
+                var ev = await db.Events.FindAsync(application.EventId.Value);
+                if (ev != null)
+                    ev.RegisteredCount++;
+            }
+
             await db.SaveChangesAsync();
         }
 
-        // ── Update status (approve/reject) ──
         public async Task UpdateStatusAsync(int applicationId, string status)
         {
             await using var db = await _factory.CreateDbContextAsync();
-
             var app = await db.VolunteerApplications.FindAsync(applicationId);
-
             if (app != null)
             {
                 app.Status = status;
@@ -111,11 +106,9 @@ namespace NekiConnect.Services
             }
         }
 
-        // ── Count applications (user dashboard) ──
         public async Task<int> GetApplicationsCountAsync(string userId)
         {
             await using var db = await _factory.CreateDbContextAsync();
-
             return await db.VolunteerApplications
                 .CountAsync(v => v.UserId == userId);
         }

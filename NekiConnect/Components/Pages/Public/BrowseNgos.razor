@@ -1,11 +1,9 @@
 ﻿@page "/ngos"
 @using NekiConnect.Models
-@using NekiConnect.Services
-@inject NGOService NgoService
+@inject INGOService NgoService
 @inject NavigationManager Nav
 
 <PageTitle>Browse NGOs — NekiConnect</PageTitle>
-
 <Navbar />
 
 <div class="bn-page">
@@ -16,8 +14,13 @@
 
     <div class="bn-filter">
         <div class="search-wrap">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-            <input class="search-inp" placeholder="Search NGO name or city..." @bind="search" @bind:event="oninput" />
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                 viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input class="search-inp" placeholder="Search NGO name or city..."
+                   @bind="search" @bind:event="oninput" />
         </div>
         <select class="cat-select" @bind="category">
             <option value="">All Categories</option>
@@ -43,16 +46,47 @@
                         <div class="bn-id">
                             <div class="bn-name">@n.Name</div>
                             <div class="bn-city">
-                                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                <svg width="12" height="12" fill="none" stroke="currentColor"
+                                     stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px">
+                                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+                                    <circle cx="12" cy="10" r="3" />
+                                </svg>
                                 @n.City
                             </div>
                         </div>
                     </div>
+
                     <span class="bn-cat">@n.Category</span>
-                    <p class="bn-mission">@(string.IsNullOrWhiteSpace(n.Mission) ? "Working to make a difference in their community." : n.Mission)</p>
+                    <p class="bn-mission">
+                        @(string.IsNullOrWhiteSpace(n.Mission)
+                            ? "Working to make a difference in their community."
+                            : n.Mission)
+                    </p>
+
+                    <!-- ✅ Option A Rating -->
+                    <div class="bn-rating">
+                        @if (ratings.TryGetValue(n.Id, out var avg) && avg > 0)
+                        {
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <span class="bn-star @(i <= Math.Round(avg) ? "on" : "")">★</span>
+                            }
+                            <span class="bn-avg">@avg.ToString("0.0")</span>
+                            <span class="bn-rcount">(@(ratingCounts.GetValueOrDefault(n.Id, 0)))</span>
+                        }
+                        else
+                        {
+                            <span class="bn-no-rating">No reviews yet</span>
+                        }
+                    </div>
+
                     <div class="bn-foot">
                         <span class="bn-verified">
-                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>
+                            <svg width="13" height="13" fill="none" stroke="currentColor"
+                                 stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px">
+                                <path d="M9 12l2 2 4-4" />
+                                <circle cx="12" cy="12" r="10" />
+                            </svg>
                             Verified
                         </span>
                         <span class="bn-link">View Profile &rarr;</span>
@@ -65,11 +99,15 @@
 
 @code {
     private List<NGO> ngos = new();
+    private Dictionary<int, double> ratings = new();
+    private Dictionary<int, int> ratingCounts = new();
     private string search = "";
     private string category = "";
 
     private List<string> categories =>
-        ngos.Select(n => n.Category).Where(c => !string.IsNullOrWhiteSpace(c)).Distinct().OrderBy(c => c).ToList();
+        ngos.Select(n => n.Category)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct().OrderBy(c => c).ToList();
 
     private List<NGO> Filtered =>
         ngos.Where(n => string.IsNullOrEmpty(category) || n.Category == category)
@@ -79,10 +117,14 @@
             .ToList();
 
     protected override async Task OnInitializedAsync()
-        => ngos = await NgoService.GetAllApprovedNGOsAsync();
+    {
+        ngos = await NgoService.GetAllApprovedNGOsAsync();
+        ratings = await NgoService.GetAverageRatingsAsync();
+        ratingCounts = await NgoService.GetRatingCountsAsync();  // ✅ count per NGO
+    }
 
     private void OpenProfile(int id) => Nav.NavigateTo($"/ngos/{id}");
 
     private static string Initial(string? name) =>
-        string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1).ToUpper();
+        string.IsNullOrEmpty(name) ? "?" : name[0].ToString().ToUpper();
 }

@@ -1,11 +1,14 @@
 ﻿@page "/ngos/{Id:int}"
 @using System.Globalization
 @using NekiConnect.Models
-@using NekiConnect.Services
-@inject NGOService NgoService
-@inject BranchService BranchService
-@inject CampaignService CampaignService
-@inject VolunteerService VolunteerService
+@using System.Net.Http.Headers
+@using System.Text
+@using System.Text.Json
+@inject INGOService NgoService
+@inject IBranchService BranchService
+@inject ICampaignService CampaignService
+@inject IVolunteerService VolunteerService
+@inject IFeedbackService FeedbackService
 @inject AuthenticationStateProvider AuthProvider
 @inject NavigationManager Nav
 
@@ -27,12 +30,21 @@ else
                 <h1 class="np-name">
                     @ngo.Name
                     <span class="np-verified">
-                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px">
+                            <path d="M9 12l2 2 4-4" />
+                            <circle cx="12" cy="12" r="10" />
+                        </svg>
                         Verified
                     </span>
                 </h1>
                 <div class="np-meta">
-                    <span><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg> @ngo.City</span>
+                    <span>
+                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px">
+                            <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        @ngo.City
+                    </span>
                     <span class="np-cat">@ngo.Category</span>
                 </div>
             </div>
@@ -42,7 +54,11 @@ else
             <div class="np-left">
                 <div class="np-card">
                     <h3 class="np-h">About &amp; Objective</h3>
-                    <p class="np-mission">@(string.IsNullOrWhiteSpace(ngo.Mission) ? "This NGO has not added an objective yet." : ngo.Mission)</p>
+                    <p class="np-mission">
+                        @(string.IsNullOrWhiteSpace(ngo.Mission)
+                            ? "This NGO has not added an objective yet."
+                            : ngo.Mission)
+                    </p>
                 </div>
                 <div class="np-card">
                     <h3 class="np-h">Contact</h3>
@@ -57,14 +73,19 @@ else
             <div class="np-right">
                 <div class="np-card map-card">
                     <h3 class="np-h">Branches &amp; Locations</h3>
-                    <iframe class="np-map" title="NGO location map" src="@MapUrl(selectedBranch)" loading="lazy"></iframe>
+                    <iframe class="np-map" title="NGO location map"
+                            src="@MapUrl(selectedBranch)" loading="lazy"></iframe>
                     @if (branches.Count > 0)
                     {
                         <div class="branch-list">
                             @foreach (var b in branches)
                             {
-                                <button class="branch-chip @(selectedBranch?.Id == b.Id ? "active" : "")" @onclick="() => selectedBranch = b">
-                                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                                <button class="branch-chip @(selectedBranch?.Id == b.Id ? "active" : "")"
+                                        @onclick="() => selectedBranch = b">
+                                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px">
+                                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" />
+                                        <circle cx="12" cy="10" r="3" />
+                                    </svg>
                                     @b.BranchName <span class="branch-city">· @b.City</span>
                                 </button>
                             }
@@ -78,6 +99,7 @@ else
             </div>
         </div>
 
+        <!-- Campaigns -->
         <div class="np-section">
             <h2 class="np-section-title">Campaigns by @ngo.Name</h2>
             @if (campaigns.Count == 0)
@@ -89,44 +111,214 @@ else
                 <div class="np-camp-grid">
                     @foreach (var c in campaigns)
                     {
-                        var pct = c.GoalAmount > 0 ? (double)Math.Min(c.RaisedAmount * 100 / c.GoalAmount, 100) : 0;
+                        var pct = c.GoalAmount > 0
+                            ? (double)Math.Min(c.RaisedAmount * 100 / c.GoalAmount, 100) : 0;
                         <div class="np-camp">
                             <div class="np-camp-title">@c.Title</div>
                             <div class="np-camp-loc">@c.Location · @c.CampaignDate.ToString("MMM d, yyyy")</div>
-                            <div class="np-track"><div class="np-fill" style="width:@(pct.ToString("F1"))%"></div></div>
-                            <div class="np-camp-amt">PKR @c.RaisedAmount.ToString("N0") raised of @c.GoalAmount.ToString("N0")</div>
+                            <div class="np-track">
+                                <div class="np-fill" style="width:@(pct.ToString("F1"))%"></div>
+                            </div>
+                            <div class="np-camp-amt">
+                                PKR @c.RaisedAmount.ToString("N0") raised of @c.GoalAmount.ToString("N0")
+                            </div>
 
-                            <!-- Volunteer apply -->
-                            @if (appliedIds.Contains(c.Id))
+                            @* ✅ Donate button logic — same pattern as Campaigns page *@
+                            @if (currentUserRole == "Donor")
                             {
-                                <div class="applied-badge">
-                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:-2px"><polyline points="20 6 9 17 4 12" /></svg>
-                                    Applied to volunteer
-                                </div>
-                            }
-                            else if (applyingId == c.Id)
-                            {
-                                <div class="apply-form">
-                                    <input class="apply-inp" placeholder="Your skills (e.g. teaching, first aid)" @bind="applySkills" />
-                                    <input class="apply-inp" placeholder="Availability (e.g. weekends)" @bind="applyAvailability" />
-                                    <div class="apply-actions">
-                                        <button class="apply-cancel" @onclick="CancelApply">Cancel</button>
-                                        <button class="apply-submit" @onclick="() => SubmitApplyAsync(c.Id)">Submit</button>
-                                    </div>
-                                </div>
-                            }
-                            else
-                            {
-                                <button class="apply-btn" @onclick="() => StartApply(c.Id)">
-                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6" /><path d="M22 11h-6" /></svg>
-                                    Apply to Volunteer
+                                <button class="apply-btn" @onclick="() => OpenDonate(c)">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                    </svg>
+                                    Donate Now
                                 </button>
+                            }
+                            else if (string.IsNullOrEmpty(userId))
+                            {
+                                <button class="apply-btn" @onclick='() => Nav.NavigateTo("/login?tab=donor")'>
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                    </svg>
+                                    Login to Donate
+                                </button>
+                            }
+                            @* NGO and Admin — button hidden *@
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Donate Modal -->
+        @if (selectedCampaign != null)
+        {
+            <div class="modal-overlay" @onclick="CloseDonate">
+                <div class="modal-box" @onclick:stopPropagation="true">
+                    <div class="modal-header">
+                        <div>
+                            <div class="modal-title">Donate to Campaign</div>
+                            <div class="modal-sub">@selectedCampaign.Title</div>
+                        </div>
+                        <button class="modal-close" @onclick="CloseDonate">✕</button>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(successMsg))
+                    {
+                        <div class="alert-success">@successMsg</div>
+                    }
+                    @if (!string.IsNullOrEmpty(errorMsg))
+                    {
+                        <div class="alert-error">@errorMsg</div>
+                    }
+
+                    @if (string.IsNullOrEmpty(successMsg))
+                    {
+                        <div class="form-group">
+                            <label class="form-label">Amount</label>
+                            <input @bind="donateAmount" type="number" class="form-input" placeholder="Enter amount" min="1" />
+                        </div>
+
+                        <div class="payment-tabs">
+                            <button class="@(paymentTab == "manual" ? "tab active" : "tab")"
+                                    @onclick='() => paymentTab = "manual"'>
+                                JazzCash / EasyPaisa
+                            </button>
+                            <button class="@(paymentTab == "stripe" ? "tab active" : "tab")"
+                                    @onclick='() => paymentTab = "stripe"'>
+                                Card (Stripe)
+                            </button>
+                        </div>
+
+                        @if (paymentTab == "manual")
+                        {
+                            <div class="payment-instructions">
+                                <p>📱 Send <strong>PKR @donateAmount.ToString("N0")</strong> to:</p>
+                                <p><strong>JazzCash / EasyPaisa: 0300-0000000</strong></p>
+                                <p>Then enter your transaction ID below.</p>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Payment Method</label>
+                                <select @bind="paymentMethod" class="form-input">
+                                    <option value="JazzCash">JazzCash</option>
+                                    <option value="EasyPaisa">EasyPaisa</option>
+                                    <option value="BankTransfer">Bank Transfer</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Transaction ID</label>
+                                <input @bind="transactionId" class="form-input" placeholder="e.g. JC-123456789" />
+                            </div>
+
+                            <button class="btn-submit" @onclick="SubmitManualDonation" disabled="@isSubmitting">
+                                @(isSubmitting ? "Processing..." : "Confirm Donation")
+                            </button>
+                        }
+                        else
+                        {
+                            <div class="payment-instructions">
+                                <p>💳 You will be redirected to Stripe's secure payment page.</p>
+                                <p>Use test card: <strong>4242 4242 4242 4242</strong></p>
+                                <p>Any future expiry date, any 3-digit CVC.</p>
+                            </div>
+
+                            <button class="btn-submit btn-stripe" @onclick="SubmitStripePayment" disabled="@isSubmitting">
+                                @(isSubmitting ? "Redirecting..." : "Pay with Card (Stripe)")
+                            </button>
+                        }
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Reviews -->
+        <div class="np-section">
+            <div class="fb-head">
+                <h2 class="np-section-title">Feedback &amp; Reviews</h2>
+                @if (feedbacks.Count > 0)
+                {
+                    <div class="fb-summary">
+                        <div class="fb-stars-row">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <span class="fb-star @(i <= Math.Round(avgRating) ? "on" : "")">★</span>
+                            }
+                        </div>
+                        <span class="fb-avg-num">@avgRating.ToString("0.0")</span>
+                        <span class="fb-count">(@feedbacks.Count reviews)</span>
+                    </div>
+                }
+            </div>
+
+            @if (userId is not null && !hasReviewed && verifiedAs is not null)
+            {
+                <a href="/donor/feedback?ngoId=@Id" class="fb-leave-btn">
+                    ✍ Leave a Review
+                </a>
+            }
+            else if (userId is not null && !hasReviewed && verifiedAs is null)
+            {
+                <div class="fb-locked">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    Only verified donors or volunteers can review this NGO.
+                </div>
+            }
+            else if (hasReviewed)
+            {
+                <div class="fb-already">✓ You've already reviewed this NGO.</div>
+            }
+            else if (userId is null)
+            {
+                <div class="fb-login">
+                    <a href="/login?tab=donor">Log in</a> to leave a review.
+                </div>
+            }
+
+            @if (feedbacks.Count == 0)
+            {
+                <p class="np-empty">No reviews yet — be the first!</p>
+            }
+            else
+            {
+                <div class="fb-list">
+                    @foreach (var f in feedbacks)
+                    {
+                        <div class="fb-item">
+                            <div class="fb-item-head">
+                                <span class="fb-avatar">@Initial(f.User?.FullName)</span>
+                                <div class="fb-item-id">
+                                    <div class="fb-name">
+                                        @(f.User?.FullName ?? "Anonymous")
+                                        @if (!string.IsNullOrEmpty(f.VerifiedAs))
+                                        {
+                                            <span class="fb-badge @(f.VerifiedAs == "Donor" ? "donor" : "volunteer")">
+                                                ✓ Verified @f.VerifiedAs
+                                            </span>
+                                        }
+                                    </div>
+                                    <div class="fb-date">@f.CreatedAt.ToString("MMM d, yyyy")</div>
+                                </div>
+                                <div class="fb-item-stars">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <span class="fb-star @(i <= f.Rating ? "on" : "")">★</span>
+                                    }
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(f.Comment))
+                            {
+                                <p class="fb-comment">@f.Comment</p>
                             }
                         </div>
                     }
                 </div>
             }
         </div>
+
     </div>
 }
 
@@ -139,10 +331,23 @@ else
     private NgoBranch? selectedBranch;
 
     private string? userId;
+    private string currentUserRole = string.Empty;
     private HashSet<int> appliedIds = new();
-    private int applyingId;
-    private string applySkills = "";
-    private string applyAvailability = "";
+
+    // ✅ Donate modal state
+    private Campaign? selectedCampaign;
+    private decimal donateAmount;
+    private string paymentMethod = "JazzCash";
+    private string transactionId = "";
+    private string paymentTab = "manual";
+    private string successMsg = "";
+    private string errorMsg = "";
+    private bool isSubmitting = false;
+
+    private List<Feedback> feedbacks = new();
+    private bool hasReviewed;
+    private string? verifiedAs;
+    private double avgRating => feedbacks.Count == 0 ? 0 : feedbacks.Average(f => f.Rating);
 
     protected override async Task OnInitializedAsync()
     {
@@ -156,6 +361,9 @@ else
         var auth = await AuthProvider.GetAuthenticationStateAsync();
         userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
+        // ✅ Get role from JWT claims
+        currentUserRole = auth.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
         if (!string.IsNullOrEmpty(userId))
         {
             var apps = await VolunteerService.GetApplicationsByUserIdAsync(userId);
@@ -164,42 +372,118 @@ else
                 .Select(a => a.CampaignId!.Value)
                 .ToHashSet();
         }
-    }
 
-    private void StartApply(int campaignId)
-    {
-        // not logged in → send to login, then back here
-        if (string.IsNullOrEmpty(userId))
+        feedbacks = await FeedbackService.GetByNgoIdAsync(Id);
+        if (!string.IsNullOrEmpty(userId))
         {
-            Nav.NavigateTo($"/login?tab=donor&returnUrl=/ngos/{Id}");
-            return;
+            hasReviewed = await FeedbackService.HasReviewedAsync(userId, Id);
+            verifiedAs = await FeedbackService.GetVerifiedTypeAsync(userId, Id);
         }
-        applyingId = campaignId;
-        applySkills = "";
-        applyAvailability = "";
     }
 
-    private void CancelApply()
+    // ✅ Donate modal methods
+    private void OpenDonate(Campaign campaign)
     {
-        applyingId = 0;
-        applySkills = "";
-        applyAvailability = "";
+        selectedCampaign = campaign;
+        donateAmount = 0;
+        transactionId = "";
+        successMsg = "";
+        errorMsg = "";
+        paymentMethod = "JazzCash";
+        paymentTab = "manual";
     }
 
-    private async Task SubmitApplyAsync(int campaignId)
-    {
-        if (string.IsNullOrEmpty(userId)) return;
+    private void CloseDonate() => selectedCampaign = null;
 
-        await VolunteerService.ApplyAsync(new VolunteerApplication
+    private async Task SubmitManualDonation()
+    {
+        if (selectedCampaign == null || string.IsNullOrEmpty(userId)) return;
+        if (donateAmount <= 0) { errorMsg = "Please enter a valid amount."; return; }
+        if (string.IsNullOrWhiteSpace(transactionId)) { errorMsg = "Please enter your transaction ID."; return; }
+
+        isSubmitting = true;
+        errorMsg = "";
+
+        try
         {
-            UserId = userId,
-            CampaignId = campaignId,
-            Skills = applySkills,
-            Availability = applyAvailability
-        });
+            using var client = new HttpClient();
+            var payload = new
+            {
+                campaignId = selectedCampaign.Id,
+                amount = donateAmount,
+                paymentMethod = paymentMethod,
+                paymentReference = transactionId
+            };
 
-        appliedIds.Add(campaignId);
-        CancelApply();
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var baseUrl = Nav.BaseUri.TrimEnd('/');
+
+            // ✅ Get token from cookie via auth header
+            var auth = await AuthProvider.GetAuthenticationStateAsync();
+            var token = auth.User.FindFirst("jti") is not null
+                ? Nav.BaseUri : null;
+
+            var response = await client.PostAsync($"{baseUrl}/api/donations/manual", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMsg = $"Thank you! PKR {donateAmount:N0} donated successfully.";
+                var camp = campaigns.FirstOrDefault(c => c.Id == selectedCampaign.Id);
+                if (camp != null) camp.RaisedAmount += donateAmount;
+            }
+            else
+            {
+                errorMsg = "Donation failed. Please try again.";
+            }
+        }
+        catch
+        {
+            errorMsg = "Something went wrong. Please try again.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task SubmitStripePayment()
+    {
+        if (selectedCampaign == null || string.IsNullOrEmpty(userId)) return;
+        if (donateAmount <= 0) { errorMsg = "Please enter a valid amount."; return; }
+
+        isSubmitting = true;
+        errorMsg = "";
+
+        try
+        {
+            using var client = new HttpClient();
+            var payload = new { campaignId = selectedCampaign.Id, amount = donateAmount };
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var baseUrl = Nav.BaseUri.TrimEnd('/');
+            var response = await client.PostAsync($"{baseUrl}/api/donations/stripe-checkout", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadAsStringAsync();
+                var doc = JsonSerializer.Deserialize<JsonElement>(result);
+                var url = doc.GetProperty("url").GetString();
+                if (url != null) Nav.NavigateTo(url, forceLoad: true);
+            }
+            else
+            {
+                errorMsg = "Could not create payment session. Please try again.";
+            }
+        }
+        catch
+        {
+            errorMsg = "Something went wrong. Please try again.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
     }
 
     private static string MapUrl(NgoBranch? b)
@@ -208,13 +492,13 @@ else
         double lat = b?.Latitude ?? 30.3753;
         double lng = b?.Longitude ?? 69.3451;
         double d = b != null ? 0.03 : 6.0;
-
-        double minLon = lng - d, minLat = lat - d, maxLon = lng + d, maxLat = lat + d;
+        double minLon = lng - d, minLat = lat - d,
+               maxLon = lng + d, maxLat = lat + d;
         string bbox = $"{minLon.ToString(ci)},{minLat.ToString(ci)},{maxLon.ToString(ci)},{maxLat.ToString(ci)}";
         string marker = b != null ? $"&marker={lat.ToString(ci)},{lng.ToString(ci)}" : "";
         return $"https://www.openstreetmap.org/export/embed.html?bbox={bbox}&layer=mapnik{marker}";
     }
 
     private static string Initial(string? name) =>
-        string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1).ToUpper();
+        string.IsNullOrEmpty(name) ? "?" : name[0].ToString().ToUpper();
 }

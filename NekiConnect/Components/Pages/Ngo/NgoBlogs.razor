@@ -1,9 +1,8 @@
 ﻿@page "/ngo/blogs"
 @layout NgoLayout
 @using NekiConnect.Models
-@using NekiConnect.Services
-@inject NGOService NgoService
-@inject BlogService BlogService
+@inject INGOService NgoService
+@inject IBlogService BlogService
 @inject AuthenticationStateProvider AuthProvider
 @attribute [Authorize(Roles = "NGO")]
 

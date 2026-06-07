@@ -1,14 +1,15 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using NekiConnect.Models;
+using NekiConnect.Interfaces;
 
 namespace NekiConnect.Services
 {
-    public class AuthService
+    public class AuthService : IAuthService
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly TokenService _tokenService;
+        private readonly ITokenService _tokenService;  
 
-        public AuthService(UserManager<ApplicationUser> userManager, TokenService tokenService)
+        public AuthService(UserManager<ApplicationUser> userManager, ITokenService tokenService)  // ✅ interface
         {
             _userManager = userManager;
             _tokenService = tokenService;

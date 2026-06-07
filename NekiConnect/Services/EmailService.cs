@@ -1,10 +1,11 @@
 ﻿using sib_api_v3_sdk.Api;
 using sib_api_v3_sdk.Client;
 using sib_api_v3_sdk.Model;
+using NekiConnect.Interfaces;
 
 namespace NekiConnect.Services
 {
-    public class EmailService
+    public class EmailService : IEmailService 
     {
         private readonly IConfiguration _config;
         private readonly TransactionalEmailsApi _api;

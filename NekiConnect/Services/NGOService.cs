@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NekiConnect.Data;
 using NekiConnect.Models;
+using NekiConnect.Interfaces;
 
 namespace NekiConnect.Services
 {
-    public class NGOService
+    public class NGOService : INGOService
     {
         private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
@@ -78,14 +79,34 @@ namespace NekiConnect.Services
                               && e.EventDate >= DateTime.Today);
         }
 
+        // ✅ Fixed — counts both campaign AND event pending applications
         public async Task<int> GetPendingVolunteersCountAsync(int ngoId)
         {
             await using var db = await _factory.CreateDbContextAsync();
             return await db.VolunteerApplications
                 .Include(v => v.Campaign)
-                .CountAsync(v => v.Campaign != null
-                              && v.Campaign.NgoId == ngoId
-                              && v.Status == "Pending");
+                .Include(v => v.Event)
+                .CountAsync(v => v.Status == "Pending" &&
+                                ((v.Campaign != null && v.Campaign.NgoId == ngoId) ||
+                                 (v.Event != null && v.Event.NgoId == ngoId)));
+        }
+
+        public async Task<Dictionary<int, double>> GetAverageRatingsAsync()
+        {
+            await using var db = await _factory.CreateDbContextAsync();
+            return await db.Feedbacks
+                .GroupBy(f => f.NgoId)
+                .Select(g => new { NgoId = g.Key, Avg = g.Average(f => f.Rating) })
+                .ToDictionaryAsync(x => x.NgoId, x => x.Avg);
+        }
+
+        public async Task<Dictionary<int, int>> GetRatingCountsAsync()
+        {
+            await using var db = await _factory.CreateDbContextAsync();
+            return await db.Feedbacks
+                .GroupBy(f => f.NgoId)
+                .Select(g => new { NgoId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.NgoId, x => x.Count);
         }
 
         public async Task<List<MonthlyDonation>> GetMonthlyDonationsAsync(int ngoId)
@@ -111,11 +132,5 @@ namespace NekiConnect.Services
             }
             return result;
         }
-    }
-
-    public class MonthlyDonation
-    {
-        public string Month { get; set; } = string.Empty;
-        public decimal Total { get; set; }
     }
 }

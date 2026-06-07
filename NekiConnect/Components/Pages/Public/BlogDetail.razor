@@ -1,0 +1,96 @@
+﻿@page "/blogs/{Id:int}"
+@using NekiConnect.Models
+@inject IBlogService BlogService
+@inject NavigationManager Navigation
+
+<PageTitle>@(post?.Title ?? "Blog") — NekiConnect</PageTitle>
+
+<Navbar />
+
+@if (post == null)
+{
+    <div class="bd-loading">Loading...</div>
+}
+else
+{
+    <div class="bd-page">
+
+        <!-- Back -->
+        <button class="bd-back" @onclick='() => Navigation.NavigateTo("/blogs")'>
+            ← Back to Blogs
+        </button>
+
+        <!-- Hero image -->
+        @if (!string.IsNullOrWhiteSpace(post.ImageUrl))
+        {
+            <div class="bd-hero">
+                <img src="@post.ImageUrl" alt="@post.Title" />
+            </div>
+        }
+        else
+        {
+            <div class="bd-hero bd-hero-placeholder">
+                <span>@post.Category</span>
+            </div>
+        }
+
+        <div class="bd-content">
+
+            <!-- Badges -->
+            <div class="bd-badges">
+                <span class="bl-badge bl-badge-feat">@post.Category</span>
+            </div>
+
+            <!-- Title -->
+            <h1 class="bd-title">@post.Title</h1>
+
+            <!-- Meta -->
+            <div class="bd-meta">
+                <span class="bl-avatar">@Initial(post.NGO?.Name)</span>
+                <div class="bd-meta-info">
+                    <span class="bd-author">@(post.NGO?.Name ?? "NGO")</span>
+                    <span class="bd-meta-sub">
+                        @post.CreatedAt.ToString("MMM d, yyyy")
+                        · @ReadTime(post.Content) min read
+                        · 👁 @post.ViewCount views
+                    </span>
+                </div>
+            </div>
+
+            <hr class="bd-divider" />
+
+            <!-- Body -->
+            <div class="bd-body">
+                @foreach (var para in post.Content.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    <p>@para</p>
+                }
+            </div>
+
+            <!-- Footer -->
+            <div class="bd-footer">
+                <span class="bd-ngo-tag">Published by @(post.NGO?.Name ?? "NGO")</span>
+                <button class="bd-back-btn" @onclick='() => Navigation.NavigateTo("/blogs")'>
+                    ← Back to all blogs
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private BlogPost? post;
+
+    protected override async Task OnInitializedAsync()
+    {
+        post = await BlogService.GetByIdAsync(Id);
+    }
+
+    private static string Initial(string? name) =>
+        string.IsNullOrEmpty(name) ? "N" : name.Substring(0, 1).ToUpper();
+
+    private static int ReadTime(string content) =>
+        Math.Max(1, content.Split(' ').Length / 200);
+}

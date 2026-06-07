@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NekiConnect.Data;
 using NekiConnect.Models;
+using NekiConnect.Interfaces;
 
 namespace NekiConnect.Services
 {
-    public class EventService
+    public class EventService : IEventService
     {
         private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
@@ -45,7 +46,6 @@ namespace NekiConnect.Services
 
             return await db.Events
                 .Include(e => e.NGO)
-                .Where(e => e.Status == "Upcoming" && e.EventDate >= DateTime.Today)
                 .OrderBy(e => e.EventDate)
                 .ToListAsync();
         }

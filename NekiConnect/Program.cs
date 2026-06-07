@@ -1,13 +1,14 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using NekiConnect.Components;
 using NekiConnect.Data;
+using NekiConnect.Interfaces;
 using NekiConnect.Models;
 using NekiConnect.Services;
-using Microsoft.AspNetCore.Components.Authorization;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -106,25 +107,26 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
 
 // ── Services (combined clean version) ──
-builder.Services.AddScoped<NGOService>();
+builder.Services.AddScoped<INGOService, NGOService>();
 
 // Core services
-builder.Services.AddScoped<CampaignService>();
-builder.Services.AddScoped<DonationService>();
-builder.Services.AddScoped<VolunteerService>();
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<BranchService>();
-builder.Services.AddScoped<NotificationService>();
-builder.Services.AddScoped<EventService>();
-builder.Services.AddScoped<BlogService>();
-builder.Services.AddScoped<BeneficiaryService>();
-builder.Services.AddScoped<AdminService>();
+builder.Services.AddScoped<ICampaignService, CampaignService>();
+builder.Services.AddScoped<IDonationService, DonationService>();
+builder.Services.AddScoped<IVolunteerService, VolunteerService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IBranchService, BranchService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IBlogService, BlogService>();
+builder.Services.AddScoped<IBeneficiaryService, BeneficiaryService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 
 // Infrastructure
-builder.Services.AddScoped<TokenService>();
-builder.Services.AddScoped<EmailService>();
-builder.Services.AddScoped<PaymentService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 var app = builder.Build();
 

@@ -1,10 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NekiConnect.Data;
 using NekiConnect.Models;
+using NekiConnect.Interfaces;
 
 namespace NekiConnect.Services
 {
-    public class BlogService
+    public class BlogService : IBlogService
     {
         private readonly IDbContextFactory<ApplicationDbContext> _factory;
 
@@ -52,9 +53,18 @@ namespace NekiConnect.Services
         {
             await using var db = await _factory.CreateDbContextAsync();
 
-            return await db.BlogPosts
+            var post = await db.BlogPosts
                 .Include(b => b.NGO)
                 .FirstOrDefaultAsync(b => b.Id == id);
+
+            // ✅ Increment view count every time blog is opened
+            if (post != null)
+            {
+                post.ViewCount++;
+                await db.SaveChangesAsync();
+            }
+
+            return post;
         }
 
         // ── Create ──

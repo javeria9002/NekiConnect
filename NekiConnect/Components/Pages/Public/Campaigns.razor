@@ -1,18 +1,17 @@
 ﻿@page "/campaigns"
 @using Microsoft.AspNetCore.Identity
 @using NekiConnect.Models
-@using NekiConnect.Services
 @using System.Net.Http.Headers
 @using System.Text
 @using System.Text.Json
-@inject CampaignService CampaignService
+@inject ICampaignService CampaignService
 @inject UserManager<ApplicationUser> UserManager
-@inject TokenService TokenService
+@inject ITokenService TokenService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @rendermode InteractiveServer
 
-<Navbar/>
+<Navbar />
 
 <PageTitle>Campaigns – NekiConnect</PageTitle>
 
@@ -36,7 +35,9 @@
                     else
                     {
                         <div class="campaign-img-placeholder">
-                            <svg width="40" height="40" fill="none" stroke="#9ca3af" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                            <svg width="40" height="40" fill="none" stroke="#9ca3af" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                            </svg>
                         </div>
                     }
                     <div class="campaign-body">
@@ -57,7 +58,17 @@
                             <span>📅 @c.CampaignDate.ToString("MMM dd, yyyy")</span>
                         </div>
 
-                        <button class="btn-donate" @onclick="() => OpenDonate(c)">Donate Now</button>
+                        @* ✅ Only show Donate button to Donors *@
+                        @if (currentUser?.Role == "Donor")
+                        {
+                            <button class="btn-donate" @onclick="() => OpenDonate(c)">Donate Now</button>
+                        }
+                        else if (currentUser == null)
+                        {
+                            <button class="btn-donate" @onclick='() => Nav.NavigateTo("/login?tab=donor")'>
+                                Login to Donate
+                            </button>
+                        }
                     </div>
                 </div>
             }
@@ -173,7 +184,8 @@
 
     void OpenDonate(Campaign campaign)
     {
-        if (currentUser == null) { Nav.NavigateTo("/login"); return; }
+        if (currentUser == null) { Nav.NavigateTo("/login?tab=donor"); return; }
+        if (currentUser.Role != "Donor") return;
         selectedCampaign = campaign;
         donateAmount = 0;
         transactionId = "";
@@ -214,6 +226,9 @@
             var baseUrl = Nav.BaseUri.TrimEnd('/');
             var response = await client.PostAsync($"{baseUrl}/api/donations/manual", content);
 
+            // ✅ Show actual error from API
+            var responseBody = await response.Content.ReadAsStringAsync();
+
             if (response.IsSuccessStatusCode)
             {
                 successMsg = $"Thank you! PKR {donateAmount:N0} donated. Check your email for the receipt.";
@@ -222,12 +237,13 @@
             }
             else
             {
-                errorMsg = "Donation failed. Please try again.";
+                // ✅ Show status code + actual response body
+                errorMsg = $"Error {(int)response.StatusCode}: {responseBody}";
             }
         }
-        catch (Exception _)
+        catch (Exception ex)
         {
-            errorMsg = "Something went wrong. Please try again.";
+            errorMsg = $"Exception: {ex.Message}";
         }
         finally
         {

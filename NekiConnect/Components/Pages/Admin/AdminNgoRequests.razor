@@ -1,9 +1,8 @@
 ﻿@page "/admin/ngo-requests"
 @layout AdminLayout
 @using NekiConnect.Models
-@using NekiConnect.Services
-@inject AdminService AdminService
-@inject EmailService EmailService
+@inject IAdminService AdminService
+@inject IEmailService EmailService
 @attribute [Authorize(Roles = "Admin")]
 
 <Navbar />

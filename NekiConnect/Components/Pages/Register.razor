@@ -3,11 +3,10 @@
 @using Microsoft.AspNetCore.Identity
 @using NekiConnect.Data
 @using NekiConnect.Models
-@using NekiConnect.Services
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager Navigation
-@inject NGOService NgoService
-@inject EmailService EmailService
+@inject INGOService NgoService
+@inject IEmailService EmailService
 
 <PageTitle>Create Account — NekiConnect</PageTitle>
 

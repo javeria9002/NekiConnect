@@ -1,9 +1,10 @@
 ﻿using Stripe;
 using Stripe.Checkout;
+using NekiConnect.Interfaces;
 
 namespace NekiConnect.Services
 {
-    public class PaymentService
+    public class PaymentService : IPaymentService
     {
         private readonly IConfiguration _config;
 

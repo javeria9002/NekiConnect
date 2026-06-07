@@ -1,9 +1,8 @@
 ﻿@page "/ngo/events"
 @layout NgoLayout
 @using NekiConnect.Models
-@using NekiConnect.Services
-@inject NGOService NgoService
-@inject EventService EventService
+@inject INGOService NgoService
+@inject IEventService EventService
 @inject AuthenticationStateProvider AuthProvider
 @attribute [Authorize(Roles = "NGO")]
 

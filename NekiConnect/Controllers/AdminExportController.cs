@@ -1,17 +1,19 @@
 ﻿using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NekiConnect.Services;
+using NekiConnect.Interfaces;
 
 namespace NekiConnect.Controllers
 {
-    [Authorize(Roles = "Admin")]   // cookie auth — only logged-in admins
+    // ✅ JWT scheme + Admin role
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
     [Route("export")]
     public class AdminExportController : Controller
     {
-        private readonly AdminService _admin;
+        private readonly IAdminService _admin;
 
-        public AdminExportController(AdminService admin)
+        public AdminExportController(IAdminService admin)
         {
             _admin = admin;
         }
@@ -93,7 +95,6 @@ namespace NekiConnect.Controllers
             return File(bytes, "text/csv", $"ngos_{DateTime.Now:yyyyMMdd}.csv");
         }
 
-        // Escapes commas/quotes so the CSV stays valid
         private static string Csv(string? v)
         {
             v ??= "";

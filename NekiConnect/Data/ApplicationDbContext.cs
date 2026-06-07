@@ -19,6 +19,8 @@ namespace NekiConnect.Data
         public DbSet<Beneficiary> Beneficiaries { get; set; }
         public DbSet<NgoBranch> NgoBranches { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Feedback> Feedbacks { get; set; }  // ✅ already there
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -55,6 +57,20 @@ namespace NekiConnect.Data
             builder.Entity<BlogPost>()
                 .HasOne(b => b.NGO).WithMany(n => n.BlogPosts)
                 .HasForeignKey(b => b.NgoId).OnDelete(DeleteBehavior.Cascade);
+
+            // ✅ Feedback → User (restrict to avoid multiple cascade paths)
+            builder.Entity<Feedback>()
+                .HasOne(f => f.User)
+                .WithMany()
+                .HasForeignKey(f => f.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ✅ Feedback → NGO (cascade — if NGO deleted, reviews deleted too)
+            builder.Entity<Feedback>()
+                .HasOne(f => f.NGO)
+                .WithMany()
+                .HasForeignKey(f => f.NgoId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Decimal precision
             builder.Entity<Campaign>().Property(c => c.GoalAmount).HasPrecision(18, 2);

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using NekiConnect.Models;
-using NekiConnect.Services;
+using NekiConnect.Interfaces;
 using System.Security.Claims;
 
 namespace NekiConnect.Controllers
@@ -13,20 +13,20 @@ namespace NekiConnect.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class DonationApiController : ControllerBase
     {
-        private readonly DonationService _donationService;
-        private readonly NotificationService _notificationService;
-        private readonly EmailService _emailService;
+        private readonly IDonationService _donationService;
+        private readonly INotificationService _notificationService;
+        private readonly IEmailService _emailService;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly CampaignService _campaignService;
-        private readonly PaymentService _paymentService;
+        private readonly ICampaignService _campaignService;
+        private readonly IPaymentService _paymentService;
 
         public DonationApiController(
-            DonationService donationService,
-            NotificationService notificationService,
-            EmailService emailService,
+            IDonationService donationService,
+            INotificationService notificationService,
+            IEmailService emailService,
             UserManager<ApplicationUser> userManager,
-            CampaignService campaignService,
-            PaymentService paymentService)
+            ICampaignService campaignService,
+            IPaymentService paymentService)
         {
             _donationService = donationService;
             _notificationService = notificationService;

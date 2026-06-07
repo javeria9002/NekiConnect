@@ -1,8 +1,7 @@
 ﻿@page "/ngo/profile"
 @layout NgoLayout
 @using NekiConnect.Models
-@using NekiConnect.Services
-@inject NGOService NgoService
+@inject INGOService NgoService
 @attribute [Authorize(Roles = "NGO")]
 @inject AuthenticationStateProvider AuthProvider
 

@@ -1,0 +1,163 @@
+﻿@page "/donor/feedback"
+@layout DonorLayout
+@using NekiConnect.Models
+@inject IFeedbackService FeedbackService
+@inject INGOService NgoService
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Nav
+@attribute [Authorize(Roles = "Donor")]
+
+<PageTitle>Leave Feedback — NekiConnect</PageTitle>
+
+<div class="df-page">
+    <h1 class="df-title">Leave a Review</h1>
+    <p class="df-sub">Share your experience with an NGO you've donated to or volunteered with.</p>
+
+    @if (submitted)
+    {
+        <div class="df-success">
+            ✓ Thank you! Your review has been submitted successfully.
+            <a href="/ngos/@selectedNgoId">View NGO Profile</a>
+        </div>
+    }
+    else if (ngos.Count == 0)
+    {
+        <div class="df-empty">
+            You haven't donated to or volunteered with any NGO yet.
+            <a href="/ngos">Browse NGOs</a>
+        </div>
+    }
+    else
+    {
+        <div class="df-card">
+
+            <!-- Step 1 — Pick NGO -->
+            <div class="df-step">
+                <label class="df-label">Select NGO</label>
+                <select class="df-select" @bind="selectedNgoId" @bind:after="OnNgoSelected">
+                    <option value="0">Choose an NGO...</option>
+                    @foreach (var n in ngos)
+                    {
+                        <option value="@n.Id">@n.Name</option>
+                    }
+                </select>
+            </div>
+
+            @if (selectedNgoId > 0)
+            {
+                @if (alreadyReviewed)
+                {
+                    <div class="df-already">✓ You've already reviewed this NGO.</div>
+                }
+                else
+                {
+                    <!-- Verified badge -->
+                    <div class="df-verified @(verifiedAs == "Donor" ? "donor" : "volunteer")">
+                        ✓ Verified @verifiedAs
+                    </div>
+
+                    <!-- Step 2 — Star Rating -->
+                    <div class="df-step">
+                        <label class="df-label">Your Rating</label>
+                        <div class="df-stars">
+                            @for (int s = 1; s <= 5; s++)
+                            {
+                                var star = s;
+                                <button class="df-star @(newRating >= star ? "on" : "")"
+                                        @onclick="() => newRating = star">
+                                    ★
+                                </button>
+                            }
+                            <span class="df-star-label">@StarLabel(newRating)</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 — Comment -->
+                    <div class="df-step">
+                        <label class="df-label">Your Review</label>
+                        <textarea class="df-textarea" rows="4"
+                                  placeholder="Share your experience — what did this NGO do well?"
+                                  @bind="newComment"></textarea>
+                    </div>
+
+                    <button class="df-submit" @onclick="SubmitAsync" disabled="@submitting">
+                        @(submitting ? "Submitting..." : "Submit Review →")
+                    </button>
+                }
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public int ngoId { get; set; }
+
+    private string? userId;
+    private List<NGO> ngos = new();
+    private int selectedNgoId;
+    private string? verifiedAs;
+    private bool alreadyReviewed;
+    private int newRating = 5;
+    private string newComment = "";
+    private bool submitting;
+    private bool submitted;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthProvider.GetAuthenticationStateAsync();
+        userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) { Nav.NavigateTo("/login"); return; }
+
+        // Load only NGOs this user is verified for
+        var allNgos = await NgoService.GetAllApprovedNGOsAsync();
+        foreach (var n in allNgos)
+        {
+            var type = await FeedbackService.GetVerifiedTypeAsync(userId, n.Id);
+            if (type is not null) ngos.Add(n);
+        }
+
+        // If came from NGO profile with ?ngoId=X
+        if (ngoId > 0)
+        {
+            selectedNgoId = ngoId;
+            await OnNgoSelected();
+        }
+    }
+
+    private async Task OnNgoSelected()
+    {
+        if (selectedNgoId == 0 || string.IsNullOrEmpty(userId)) return;
+        verifiedAs = await FeedbackService.GetVerifiedTypeAsync(userId, selectedNgoId);
+        alreadyReviewed = await FeedbackService.HasReviewedAsync(userId, selectedNgoId);
+        newRating = 5;
+        newComment = "";
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (string.IsNullOrEmpty(userId) || verifiedAs is null || selectedNgoId == 0) return;
+        submitting = true;
+
+        await FeedbackService.AddAsync(new NekiConnect.Models.Feedback  
+        {
+            NgoId = selectedNgoId,
+            UserId = userId,
+            Rating = newRating,
+            Comment = newComment,
+            VerifiedAs = verifiedAs
+        });
+
+        submitting = false;
+        submitted = true;
+    }
+
+    private static string StarLabel(int r) => r switch
+    {
+        1 => "Poor",
+        2 => "Fair",
+        3 => "Good",
+        4 => "Very Good",
+        5 => "Excellent",
+        _ => ""
+    };
+}

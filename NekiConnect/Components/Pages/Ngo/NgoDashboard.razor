@@ -1,9 +1,8 @@
 ﻿@page "/ngo/dashboard"
 @layout NgoLayout
 @using NekiConnect.Models
-@using NekiConnect.Services
-@inject NGOService NgoService
-@inject CampaignService CampaignService
+@inject INGOService NgoService
+@inject ICampaignService CampaignService
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthProvider
 @attribute [Authorize(Roles = "NGO")]

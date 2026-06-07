@@ -1,7 +1,6 @@
 ﻿@page "/admin/dashboard"
 @layout AdminLayout
-@using NekiConnect.Services
-@inject AdminService AdminService
+@inject IAdminService AdminService
 @inject NavigationManager Nav
 @attribute [Authorize(Roles = "Admin")]
 

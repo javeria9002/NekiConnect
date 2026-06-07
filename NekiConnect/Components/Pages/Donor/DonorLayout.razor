@@ -1,0 +1,84 @@
+﻿@inherits LayoutComponentBase
+@using NekiConnect.Models
+@using Microsoft.AspNetCore.Identity
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Nav
+
+<Navbar />
+<div class="donor-layout">
+    <div class="donor-sidebar">
+        <div class="donor-sidebar-profile">
+            <div class="donor-avatar">@(currentUser?.FullName?.Substring(0, 1).ToUpper() ?? "D")</div>
+            <div class="donor-sidebar-name">@currentUser?.FullName</div>
+            <div class="donor-sidebar-role">Donor Account</div>
+        </div>
+
+        <nav class="donor-nav">
+            <a href="/donor/dashboard" class="@IsActive("/donor/dashboard")">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                </svg>
+                Dashboard
+            </a>
+            <a href="/donor/donations" class="@IsActive("/donor/donations")">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+                My Donations
+            </a>
+            <a href="/donor/applications" class="@IsActive("/donor/applications")">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                </svg>
+                Volunteer Applications
+            </a>
+            <a href="/donor/feedback" class="@IsActive("/donor/feedback")">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Leave Feedback
+            </a>
+            <a href="/donor/profile" class="@IsActive("/donor/profile")">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+                My Profile
+            </a>
+        </nav>
+
+        <div class="donor-logout">
+            <button type="button" @onclick='() => Nav.NavigateTo("/account/logout", forceLoad: true)'>
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <div class="donor-content">
+        @Body
+    </div>
+</div>
+
+@code {
+    private ApplicationUser? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUser = await UserManager.GetUserAsync(auth.User);
+    }
+
+    private string IsActive(string path) =>
+        Nav.Uri.Contains(path) ? "active" : "";
+}

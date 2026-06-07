@@ -121,6 +121,178 @@
         font-weight: 600;
     }
 
+/* Donate Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    width: 420px;
+    max-width: 90vw;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.modal-sub {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 0;
+}
+
+    .modal-close:hover {
+        color: #111827;
+    }
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+    outline: none;
+}
+
+    .form-input:focus {
+        border-color: #16a34a;
+    }
+
+.payment-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tab {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #6b7280;
+    transition: all 0.15s;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+    .tab.active {
+        background: #f0fdf4;
+        border-color: #16a34a;
+        color: #16a34a;
+    }
+
+.payment-instructions {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #374151;
+    line-height: 1.6;
+}
+
+    .payment-instructions p {
+        margin: 4px 0;
+    }
+
+.btn-submit {
+    width: 100%;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.15s;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+    .btn-submit:hover:not(:disabled) {
+        background: #15803d;
+    }
+
+    .btn-submit:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+
+.btn-stripe {
+    background: #635bff;
+}
+
+    .btn-stripe:hover:not(:disabled) {
+        background: #4f46e5;
+    }
+
+.alert-success {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: #16a34a;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.alert-error {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: #dc2626;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+
 .map-card {
     display: flex;
     flex-direction: column;
@@ -243,6 +415,180 @@
 .np-empty {
     color: #9ca3af;
     font-size: .9rem;
+}
+
+/* Reviews */
+.fb-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .8rem;
+    margin-bottom: 1.2rem;
+}
+
+.fb-summary {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.fb-stars-row {
+    display: flex;
+    gap: 2px;
+}
+
+.fb-star {
+    color: #d1d5db;
+    font-size: 1.1rem;
+}
+
+    .fb-star.on {
+        color: #f59e0b;
+    }
+
+.fb-avg-num {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #111827;
+}
+
+.fb-count {
+    font-size: .82rem;
+    color: #9ca3af;
+}
+
+.fb-leave-btn {
+    display: inline-block;
+    margin-bottom: 1.2rem;
+    background: #16a34a;
+    color: #fff;
+    border-radius: 999px;
+    padding: .5rem 1.3rem;
+    font-size: .88rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+    .fb-leave-btn:hover {
+        background: #15803d;
+    }
+
+.fb-locked {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    background: #fef9ec;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: .85rem 1rem;
+    font-size: .88rem;
+    color: #92400e;
+    margin-bottom: 1rem;
+}
+
+.fb-already {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: .85rem 1rem;
+    font-size: .88rem;
+    color: #15803d;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.fb-login {
+    font-size: .9rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
+}
+
+    .fb-login a {
+        color: #16a34a;
+        font-weight: 600;
+    }
+
+.fb-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.fb-item {
+    background: #fff;
+    border: 1.5px solid #eef0f3;
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+}
+
+.fb-item-head {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+}
+
+.fb-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #16a34a;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: .95rem;
+}
+
+.fb-item-id {
+    flex: 1;
+}
+
+.fb-name {
+    font-weight: 700;
+    color: #111827;
+    font-size: .9rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    flex-wrap: wrap;
+}
+
+.fb-date {
+    font-size: .76rem;
+    color: #9ca3af;
+    margin-top: 2px;
+}
+
+.fb-item-stars {
+    display: flex;
+    gap: 1px;
+}
+
+.fb-badge {
+    font-size: .72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
+    .fb-badge.donor {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .fb-badge.volunteer {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+.fb-comment {
+    font-size: .88rem;
+    color: #4b5563;
+    line-height: 1.6;
+    margin: .7rem 0 0;
 }
 
 

@@ -1,17 +1,17 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NekiConnect.Services;
+using NekiConnect.Interfaces;  //  correct namespace
 
 namespace NekiConnect.Pages.Account
 {
     [IgnoreAntiforgeryToken]
     public class LoginModel : PageModel
     {
-        private readonly AuthService _authService;
+        private readonly IAuthService _authService;  //  underscore prefix
 
-        public LoginModel(AuthService authService)
+        public LoginModel(IAuthService authService)  //  interface in constructor
         {
-            _authService = authService;
+            _authService = authService;  //  matches field name
         }
 
         [BindProperty] public string Email { get; set; } = string.Empty;
@@ -32,7 +32,6 @@ namespace NekiConnect.Pages.Account
                     "suspended" => "suspended",
                     _ => "invalid"
                 };
-
                 return Redirect($"/login?error={errorCode}&tab={Role?.ToLower() ?? "donor"}");
             }
 

@@ -1,8 +1,7 @@
 ﻿@page "/admin/donations"
 @layout AdminLayout
 @using NekiConnect.Models
-@using NekiConnect.Services
-@inject AdminService AdminService
+@inject IAdminService AdminService
 @attribute [Authorize(Roles = "Admin")]
 
 <Navbar/>

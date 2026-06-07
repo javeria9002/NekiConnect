@@ -1,4 +1,5 @@
 ﻿@page "/donor/profile"
+@layout DonorLayout
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using NekiConnect.Models
@@ -10,71 +11,32 @@
 
 <PageTitle>My Profile – NekiConnect</PageTitle>
 
-<div class="donor-layout">
-    <div class="donor-sidebar">
-        <div class="donor-sidebar-profile">
-            <div class="donor-avatar">@(currentUser?.FullName?.Substring(0, 1).ToUpper() ?? "D")</div>
-            <div class="donor-sidebar-name">@currentUser?.FullName</div>
-            <div class="donor-sidebar-role">Donor Account</div>
-        </div>
-        <nav class="donor-nav">
-            <a href="/donor/dashboard">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
-                Dashboard
-            </a>
-            <a href="/donor/donations">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
-                My Donations
-            </a>
-            <a href="/donor/applications">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>
-                Volunteer Applications
-            </a>
-            <a href="/donor/profile" class="active">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                My Profile
-            </a>
-        </nav>
-        <div class="donor-logout">
-            <form method="post" action="/Account/Logout">
-                <AntiforgeryToken />
-                <button type="submit">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
-                    Logout
-                </button>
-            </form>
-        </div>
+<h2 class="donor-page-title">My Profile</h2>
+<p class="donor-page-subtitle">Update your personal information</p>
+
+@if (saved)
+{
+    <div class="alert-success">✓ Profile updated successfully!</div>
+}
+
+<div class="profile-card">
+    <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input @bind="fullName" class="form-input" />
     </div>
-
-    <div class="donor-content">
-        <h2 class="donor-page-title">My Profile</h2>
-        <p class="donor-page-subtitle">Update your personal information</p>
-
-        @if (saved)
-        {
-            <div class="alert-success">Profile updated successfully!</div>
-        }
-
-        <div class="donor-form-card">
-            <div class="form-group">
-                <label class="form-label">Full Name</label>
-                <input @bind="fullName" class="form-input" />
-            </div>
-            <div class="form-group">
-                <label class="form-label">Email</label>
-                <input value="@currentUser?.Email" disabled class="form-input" />
-            </div>
-            <div class="form-group">
-                <label class="form-label">City</label>
-                <input @bind="city" class="form-input" />
-            </div>
-            <div class="form-group">
-                <label class="form-label">Bio</label>
-                <textarea @bind="bio" rows="3" class="form-textarea"></textarea>
-            </div>
-            <button @onclick="SaveProfile" class="btn-save">Save Changes</button>
-        </div>
+    <div class="form-group">
+        <label class="form-label">Email</label>
+        <input value="@currentUser?.Email" disabled class="form-input disabled" />
     </div>
+    <div class="form-group">
+        <label class="form-label">City</label>
+        <input @bind="city" class="form-input" />
+    </div>
+    <div class="form-group">
+        <label class="form-label">Bio</label>
+        <textarea @bind="bio" rows="4" class="form-textarea"></textarea>
+    </div>
+    <button @onclick="SaveProfile" class="btn-save">Save Changes</button>
 </div>
 
 @code {

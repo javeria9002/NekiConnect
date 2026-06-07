@@ -3,10 +3,11 @@ using NekiConnect.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using NekiConnect.Interfaces;
 
 namespace NekiConnect.Services
 {
-    public class TokenService
+    public class TokenService : ITokenService
     {
         private readonly IConfiguration _config;
 

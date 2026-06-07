@@ -1,7 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @using NekiConnect.Models
-@using NekiConnect.Services
-@inject NGOService NgoService
+@inject INGOService NgoService
 @inject AuthenticationStateProvider AuthProvider
 
 <div class="ngo-shell">
@@ -67,7 +66,7 @@
 
         </nav>
 
-        <a class="side-logout" href="/logout">
+        <a class="side-logout" href="/account/logout">
             Logout
         </a>
     </aside>

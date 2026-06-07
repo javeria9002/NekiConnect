@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using NekiConnect.Data;
 using NekiConnect.Models;
+using NekiConnect.Interfaces;
+
 
 namespace NekiConnect.Services
 {
-    public class BeneficiaryService
+    public class BeneficiaryService : IBeneficiaryService
     {
         private readonly IDbContextFactory<ApplicationDbContext> _factory;
 

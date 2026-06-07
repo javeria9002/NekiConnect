@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using NekiConnect.Interfaces;
 using NekiConnect.Models;
-using NekiConnect.Services;
 using System.Security.Claims;
 
 namespace NekiConnect.Controllers
@@ -14,17 +14,16 @@ namespace NekiConnect.Controllers
     public class AuthApiController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly TokenService _tokenService;
+        private readonly ITokenService _tokenService;
 
         public AuthApiController(
             UserManager<ApplicationUser> userManager,
-            TokenService tokenService)
+            ITokenService tokenService)
         {
             _userManager = userManager;
             _tokenService = tokenService;
         }
 
-        // POST /api/auth/login  (PUBLIC)
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest req)
@@ -58,7 +57,6 @@ namespace NekiConnect.Controllers
             });
         }
 
-        // GET /api/auth/me  (any logged-in user)
         [HttpGet("me")]
         public async Task<IActionResult> Me()
         {
@@ -79,7 +77,6 @@ namespace NekiConnect.Controllers
             });
         }
 
-        // GET /api/auth/admin-only  (Admin only)
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         [HttpGet("admin-only")]
         public IActionResult AdminOnly()

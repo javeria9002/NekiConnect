@@ -3,9 +3,8 @@
 @using System.Globalization
 @using System.Net.Http.Json
 @using NekiConnect.Models
-@using NekiConnect.Services
-@inject NGOService NgoService
-@inject BranchService BranchService
+@inject INGOService NgoService
+@inject IBranchService BranchService
 @inject AuthenticationStateProvider AuthProvider
 @attribute [Authorize(Roles = "NGO")]
 @inject HttpClient Http

@@ -1,42 +1,103 @@
 ﻿@page "/blogs"
 @using NekiConnect.Models
-@using NekiConnect.Services
-@inject BlogService BlogService
+@inject IBlogService BlogService
+@inject NavigationManager Navigation
 
-<PageTitle>Blogs — NekiConnect</PageTitle>
+<PageTitle>Blog — NekiConnect</PageTitle>
 
 <Navbar />
 
-<div class="pb-page">
-    <div class="pb-head">
-        <h1 class="pb-title">Stories &amp; Updates</h1>
-        <p class="pb-sub">Impact stories and updates from NGOs on NekiConnect.</p>
+<div class="bl-page">
+
+    <!-- Breadcrumb -->
+    <div class="bl-breadcrumb">
+        <a href="/">Home</a>
+        <span>›</span>
+        <span>Blogs</span>
     </div>
 
-    @if (posts.Count == 0)
+    <h1 class="bl-title">NekiConnect Blog</h1>
+    <p class="bl-sub">Impact stories, guides, and updates from NGOs and donors across Pakistan.</p>
+
+    @if (featured != null)
     {
-        <div class="empty">No blog posts yet.</div>
+        <!-- Featured Post -->
+        <div class="bl-featured" @onclick="() => GoTo(featured.Id)" style="cursor:pointer;">
+            <div class="bl-feat-badges">
+                <span class="bl-badge bl-badge-feat">Featured</span>
+                <span class="bl-badge bl-badge-cat">@featured.Category</span>
+            </div>
+            <h2 class="bl-feat-title">@featured.Title</h2>
+            <p class="bl-feat-excerpt">
+                @(featured.Content.Length > 160 ? featured.Content.Substring(0, 160) + "…" : featured.Content)
+            </p>
+            <div class="bl-feat-meta">
+                <span class="bl-avatar">@Initial(featured.NGO?.Name)</span>
+                <span class="bl-author">@(featured.NGO?.Name ?? "NGO")</span>
+                <span class="bl-dot">·</span>
+                <span>@featured.CreatedAt.ToString("MMM d, yyyy")</span>
+                <span class="bl-dot">·</span>
+                <span>👁 @featured.ViewCount</span>
+            </div>
+            <button class="bl-readbtn">Read Article →</button>
+        </div>
+    }
+
+    <!-- Search + Filter -->
+    <div class="bl-toolbar">
+        <div class="bl-search-wrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input @bind="search" @bind:event="oninput" placeholder="Search blog posts..." class="bl-search" />
+        </div>
+        <div class="bl-filters">
+            @foreach (var f in filters)
+            {
+                <button class="bl-filter @(activeFilter == f ? "active" : "")"
+                        @onclick="() => activeFilter = f">@f</button>
+            }
+        </div>
+    </div>
+
+    <!-- Grid -->
+    @if (Filtered.Count == 0)
+    {
+        <div class="bl-empty">No blog posts found.</div>
     }
     else
     {
-        <div class="pb-grid">
-            @foreach (var b in posts)
+        <div class="bl-grid">
+            @foreach (var b in Filtered)
             {
-                <div class="pb-card">
-                    <div class="pb-top">
-                        <span class="pb-cat">@b.Category</span>
-                        <span class="pb-date">@b.CreatedAt.ToString("MMM d, yyyy")</span>
+                <div class="bl-card" @onclick="() => GoTo(b.Id)">
+                    @if (!string.IsNullOrWhiteSpace(b.ImageUrl))
+                    {
+                        <div class="bl-card-img">
+                            <img src="@b.ImageUrl" alt="@b.Title" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="bl-card-img bl-card-img-placeholder">
+                            <span>@b.Category</span>
+                        </div>
+                    }
+                    <div class="bl-card-body">
+                        <span class="bl-badge bl-badge-cat">@b.Category</span>
+                        <h3 class="bl-card-title">@b.Title</h3>
+                        <p class="bl-card-excerpt">
+                            @(b.Content.Length > 120 ? b.Content.Substring(0, 120) + "…" : b.Content)
+                        </p>
+                        <div class="bl-card-meta">
+                            <span class="bl-avatar sm">@Initial(b.NGO?.Name)</span>
+                            <span class="bl-card-author">@(b.NGO?.Name ?? "NGO")</span>
+                            <span class="bl-dot">·</span>
+                            <span>@ReadTime(b.Content) min read</span>
+                            <span class="bl-dot">·</span>
+                            <span>👁 @b.ViewCount</span>
+                        </div>
                     </div>
-                    <h3 class="pb-card-title">@b.Title</h3>
-                    <div class="pb-by">by @(b.NGO?.Name ?? "NGO")</div>
-                    <p class="pb-excerpt">
-                        @(expandedId == b.Id
-                            ? b.Content
-                            : (b.Content.Length > 160 ? b.Content.Substring(0, 160) + "…" : b.Content))
-                    </p>
-                    <button class="pb-readmore" @onclick="() => Toggle(b.Id)">
-                        @(expandedId == b.Id ? "Show less" : "Read more →")
-                    </button>
                 </div>
             }
         </div>
@@ -45,10 +106,31 @@
 
 @code {
     private List<BlogPost> posts = new();
-    private int expandedId;
+    private string search = "";
+    private string activeFilter = "All";
+    private BlogPost? featured;
+
+    private List<string> filters = new() { "All", "Impact", "Guide", "Story", "Report", "Awareness" };
+
+    private List<BlogPost> Filtered => posts
+        .Where(b => b != featured)
+        .Where(b => activeFilter == "All" || b.Category == activeFilter)
+        .Where(b => string.IsNullOrEmpty(search) ||
+                    b.Title.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    b.Content.Contains(search, StringComparison.OrdinalIgnoreCase))
+        .ToList();
 
     protected override async Task OnInitializedAsync()
-        => posts = await BlogService.GetAllPublishedAsync();
+    {
+        posts = await BlogService.GetAllPublishedAsync();
+        featured = posts.FirstOrDefault();
+    }
 
-    private void Toggle(int id) => expandedId = expandedId == id ? 0 : id;
+    private void GoTo(int id) => Navigation.NavigateTo($"/blogs/{id}");
+
+    private static string Initial(string? name) =>
+        string.IsNullOrEmpty(name) ? "N" : name.Substring(0, 1).ToUpper();
+
+    private static int ReadTime(string content) =>
+        Math.Max(1, content.Split(' ').Length / 200);
 }

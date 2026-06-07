@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NekiConnect.Interfaces;
 using NekiConnect.Models;
-using NekiConnect.Services;
 using System.Security.Claims;
 
 namespace NekiConnect.Controllers
@@ -12,10 +12,10 @@ namespace NekiConnect.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class VolunteerApiController : ControllerBase
     {
-        private readonly VolunteerService _volunteerService;
-        private readonly NotificationService _notificationService;
+        private readonly IVolunteerService _volunteerService;
+        private readonly INotificationService _notificationService;
 
-        public VolunteerApiController(VolunteerService volunteerService, NotificationService notificationService)
+        public VolunteerApiController(IVolunteerService volunteerService, INotificationService notificationService)
         {
             _volunteerService = volunteerService;
             _notificationService = notificationService;
