@@ -8,6 +8,7 @@
         Task<bool> SendDonationReceiptAsync(string toEmail, string toName, decimal amount, string targetTitle);
         Task<bool> SendNgoApprovedEmailAsync(string toEmail, string ngoName);
         Task<bool> SendNgoRejectedEmailAsync(string toEmail, string ngoName, string reason);
+        Task<bool> SendNgoSuspendedEmailAsync(string toEmail, string ngoName, string reason);
         Task<bool> SendVolunteerStatusAsync(string toEmail, string toName, string campaignTitle, bool accepted);
     }
 }

@@ -1,0 +1,503 @@
+﻿@page "/campaign/{Id:int}"
+@using NekiConnect.Models
+@using System.Net.Http.Headers
+@using System.Text
+@using System.Text.Json
+@inject ICampaignService CampaignService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<Navbar />
+
+<PageTitle>@(campaign?.Title ?? "Campaign") – NekiConnect</PageTitle>
+
+@if (isLoading)
+{
+    <div class="cd-loading">
+        <div class="cd-spinner"></div>
+        <p>Loading campaign...</p>
+    </div>
+}
+else if (campaign is null)
+{
+    <div class="cd-notfound">
+        <div class="cd-notfound-icon">!</div>
+        <h2>Campaign not found</h2>
+        <p>This campaign may have been removed or doesn't exist.</p>
+        <a href="/campaigns" class="cd-back-btn">← Browse Campaigns</a>
+    </div>
+}
+else
+{
+    var progress = campaign.GoalAmount > 0 ? (double)(campaign.RaisedAmount / campaign.GoalAmount * 100) : 0;
+    var donors = campaign.Donations?.Count ?? 0;
+    var daysLeft = (campaign.CampaignDate.Date - DateTime.Today).Days;
+    var isActive = campaign.Status == "Upcoming";
+
+    <div class="cd-page">
+
+        <div class="cd-breadcrumb">
+            <a href="/campaigns">← Campaigns</a>
+            <span>›</span>
+            <span>@campaign.Title</span>
+        </div>
+
+        <div class="cd-layout">
+
+            <div class="cd-main">
+
+                <div class="cd-hero">
+                    @if (!string.IsNullOrEmpty(campaign.ImageUrl))
+                    {
+                        <img src="@campaign.ImageUrl" alt="@campaign.Title" class="cd-hero-img" />
+                    }
+                    else
+                    {
+                        <div class="cd-hero-placeholder">
+                            <svg width="56" height="56" fill="none" stroke="#9ca3af" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                            </svg>
+                        </div>
+                    }
+                    <div class="cd-hero-badges">
+                        @if (!string.IsNullOrEmpty(campaign.NGO?.Category))
+                        {
+                            <span class="cd-badge cd-badge-cat">@campaign.NGO.Category</span>
+                        }
+                        <span class="cd-badge @(isActive ? "cd-badge-active" : "cd-badge-done")">
+                            @(isActive ? "Active" : "Completed")
+                        </span>
+                    </div>
+                    <div class="cd-hero-share">
+                        <button class="cd-icon-btn" title="Share">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <circle cx="18" cy="5" r="3" />
+                                <circle cx="6" cy="12" r="3" />
+                                <circle cx="18" cy="19" r="3" />
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                            </svg>
+                        </button>
+                        <button class="cd-icon-btn" title="Save">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <h1 class="cd-title">@campaign.Title</h1>
+                <div class="cd-meta">
+                    <span class="cd-meta-item">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        @campaign.Location
+                    </span>
+                    <span class="cd-meta-item">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        @donors donors
+                    </span>
+                    <span class="cd-meta-item @(daysLeft < 0 ? "cd-meta-expired" : daysLeft <= 7 ? "cd-meta-urgent" : "")">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                        @(daysLeft < 0 ? "Ended" : daysLeft == 0 ? "Ends today" : $"{daysLeft} days remaining")
+                    </span>
+                </div>
+
+                <div class="cd-section">
+                    <h2 class="cd-section-title">Campaign Story</h2>
+                    <div class="cd-story">
+                        @((MarkupString)(campaign.Description?.Replace("\n", "<br/>") ?? ""))
+                    </div>
+                </div>
+
+                @if (campaign.SeatsAvailable > 0)
+                {
+                    <div class="cd-section">
+                        <h2 class="cd-section-title">Volunteer Opportunities</h2>
+                        <div class="cd-volunteer-box">
+                            <div class="cd-vol-icon">🙋</div>
+                            <div>
+                                <div class="cd-vol-count">@campaign.SeatsAvailable spots available</div>
+                                <div class="cd-vol-sub">Join as a volunteer and make a direct impact on the ground.</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="cd-section cd-ngo-mobile">
+                    <h2 class="cd-section-title">About the NGO</h2>
+                    <div class="cd-ngo-card">
+                        <div class="cd-ngo-avatar">@((campaign.NGO?.Name ?? "N")[0])</div>
+                        <div>
+                            <div class="cd-ngo-name">@(campaign.NGO?.Name ?? "—")</div>
+                            <div class="cd-ngo-verified">
+                                <svg width="12" height="12" fill="#16a34a" viewBox="0 0 24 24">
+                                    <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                </svg>
+                                Verified NGO
+                            </div>
+                            @if (!string.IsNullOrEmpty(campaign.NGO?.City))
+                            {
+                                <div class="cd-ngo-city">📍 @campaign.NGO.City</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="cd-sidebar">
+
+                <div class="cd-donate-card">
+                    <div class="cd-raised-row">
+                        <span class="cd-raised-amt">PKR @FormatMoney(campaign.RaisedAmount)</span>
+                        <span class="cd-raised-lbl">raised</span>
+                    </div>
+
+                    <div class="cd-prog-track">
+                        <div class="cd-prog-fill" style="width:@(Math.Min(progress, 100).ToString("F1"))%"></div>
+                    </div>
+
+                    <div class="cd-prog-meta">
+                        <span class="cd-prog-pct"><strong>@progress.ToString("F0")%</strong> of PKR @FormatMoney(campaign.GoalAmount) goal</span>
+                        @if (daysLeft >= 0)
+                        {
+                            <span class="cd-days-left @(daysLeft <= 7 ? "urgent" : "")">@daysLeft@(daysLeft <= 7 ? "d" : "d left")</span>
+                        }
+                    </div>
+
+                    <div class="cd-donors-row">
+                        <svg width="14" height="14" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        <span>@donors people have donated</span>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(successMsg))
+                    {
+                        <div class="cd-alert-suc">✓ @successMsg</div>
+                    }
+                    @if (!string.IsNullOrEmpty(errorMsg))
+                    {
+                        <div class="cd-alert-err">⚠ @errorMsg</div>
+                    }
+
+                    @if (string.IsNullOrEmpty(successMsg) && isActive)
+                    {
+                        <div class="cd-amount-label">Select Amount (PKR)</div>
+                        <div class="cd-presets">
+                            @foreach (var preset in new[] { 500m, 1000m, 2500m, 5000m, 10000m })
+                            {
+                                <button class="cd-preset @(donateAmount == preset && !customMode ? "selected" : "")"
+                                        @onclick="() => SelectPreset(preset)">
+                                    @FormatPreset(preset)
+                                </button>
+                            }
+                            <button class="cd-preset @(customMode ? "selected" : "")"
+                                    @onclick="ToggleCustom">
+                                Custom
+                            </button>
+                        </div>
+
+                        @if (customMode)
+                        {
+                            <div class="cd-custom-input">
+                                <span class="cd-curr">PKR</span>
+                                <input type="number" @bind="donateAmount" min="1" placeholder="Enter amount" />
+                            </div>
+                        }
+
+                        <div class="cd-pay-tabs">
+                            <button class="cd-pay-tab @(paymentTab == "manual" ? "active" : "")"
+                                    @onclick='() => paymentTab = "manual"'>
+                                JazzCash / EasyPaisa
+                            </button>
+                            <button class="cd-pay-tab @(paymentTab == "stripe" ? "active" : "")"
+                                    @onclick='() => paymentTab = "stripe"'>
+                                Card (Stripe)
+                            </button>
+                        </div>
+
+                        @if (paymentTab == "manual")
+                        {
+                            <div class="cd-pay-info">
+                                <p>Send <strong>PKR @donateAmount.ToString("N0")</strong> to:</p>
+                                <p><strong>JazzCash / EasyPaisa: 0300-0000000</strong></p>
+                                <p>Then enter your transaction ID below.</p>
+                            </div>
+
+                            <div class="cd-fg">
+                                <label>Payment Method</label>
+                                <select @bind="paymentMethod">
+                                    <option value="JazzCash">JazzCash</option>
+                                    <option value="EasyPaisa">EasyPaisa</option>
+                                    <option value="BankTransfer">Bank Transfer</option>
+                                </select>
+                            </div>
+
+                            <div class="cd-fg">
+                                <label>Transaction ID</label>
+                                <input @bind="transactionId" placeholder="e.g. JC-123456789" />
+                            </div>
+
+                            @if (currentUserRole == "Donor")
+                            {
+                                <button class="cd-donate-btn" @onclick="SubmitManualDonation" disabled="@isSubmitting">
+                                    <svg width="16" height="16" fill="white" viewBox="0 0 24 24">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                    </svg>
+                                    @(isSubmitting ? "Processing..." : "Donate Now")
+                                </button>
+                            }
+                            else if (string.IsNullOrEmpty(currentUserId))
+                            {
+                                <button class="cd-donate-btn" @onclick='() => Nav.NavigateTo("/login?tab=donor")'>
+                                    Login to Donate
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            <div class="cd-pay-info">
+                                <p>You will be redirected to Stripe's secure payment page.</p>
+                                <p>Test card: <strong>4242 4242 4242 4242</strong>, any future expiry, any CVC.</p>
+                            </div>
+
+                            @if (currentUserRole == "Donor")
+                            {
+                                <button class="cd-donate-btn cd-stripe-btn" @onclick="SubmitStripePayment" disabled="@isSubmitting">
+                                    @(isSubmitting ? "Redirecting..." : "Pay with Card (Stripe)")
+                                </button>
+                            }
+                            else if (string.IsNullOrEmpty(currentUserId))
+                            {
+                                <button class="cd-donate-btn" @onclick='() => Nav.NavigateTo("/login?tab=donor")'>
+                                    Login to Donate
+                                </button>
+                            }
+                        }
+
+                        <div class="cd-secure-note">
+                            Secure payment via JazzCash and EasyPaisa
+                        </div>
+                    }
+                    else if (!isActive)
+                    {
+                        <div class="cd-campaign-ended">This campaign has ended. Thank you to all donors!</div>
+                    }
+                </div>
+
+                <div class="cd-ngo-card-desk">
+                    <h3 class="cd-ngo-head">About the NGO</h3>
+                    <div class="cd-ngo-inner">
+                        <div class="cd-ngo-avatar">@((campaign.NGO?.Name ?? "N")[0])</div>
+                        <div>
+                            <div class="cd-ngo-name">@(campaign.NGO?.Name ?? "—")</div>
+                            <div class="cd-ngo-verified">
+                                <svg width="12" height="12" fill="#16a34a" viewBox="0 0 24 24">
+                                    <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                </svg>
+                                Verified NGO
+                            </div>
+                            @if (!string.IsNullOrEmpty(campaign.NGO?.City))
+                            {
+                                <div class="cd-ngo-city">Location: @campaign.NGO.City</div>
+                            }
+                            @if (!string.IsNullOrEmpty(campaign.NGO?.Category))
+                            {
+                                <div class="cd-ngo-city">Category: @campaign.NGO.Category</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    Campaign? campaign;
+    bool isLoading = true;
+    string currentUserId = "";
+    string currentUserRole = "";
+
+    decimal donateAmount;
+    bool customMode = false;
+    string paymentMethod = "JazzCash";
+    string transactionId = "";
+    string paymentTab = "manual";
+    string successMsg = "";
+    string errorMsg = "";
+    bool isSubmitting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        campaign = await CampaignService.GetCampaignByIdAsync(Id);
+
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+        currentUserRole = auth.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
+        isLoading = false;
+    }
+
+    private void SelectPreset(decimal amount)
+    {
+        donateAmount = amount;
+        customMode = false;
+        errorMsg = "";
+    }
+
+    private void ToggleCustom()
+    {
+        customMode = true;
+        donateAmount = 0;
+        errorMsg = "";
+    }
+
+    private async Task<string?> GetJwtTokenAsync()
+    {
+        var token = HttpContextAccessor.HttpContext?.Request.Cookies["jwt"];
+        
+        if (!string.IsNullOrEmpty(token))
+            return token;
+        
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        return auth.User.FindFirst("jwt")?.Value;
+    }
+
+    private async Task SubmitManualDonation()
+    {
+        if (campaign == null || string.IsNullOrEmpty(currentUserId)) return;
+        if (donateAmount <= 0) { errorMsg = "Please enter a valid amount."; return; }
+        if (string.IsNullOrWhiteSpace(transactionId)) { errorMsg = "Please enter your transaction ID."; return; }
+
+        isSubmitting = true;
+        errorMsg = "";
+
+        try
+        {
+            var jwtToken = await GetJwtTokenAsync();
+
+            using var client = new HttpClient();
+            if (!string.IsNullOrEmpty(jwtToken))
+            {
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", jwtToken);
+            }
+
+            var payload = new
+            {
+                campaignId = campaign.Id,
+                amount = donateAmount,
+                paymentMethod = paymentMethod,
+                paymentReference = transactionId
+            };
+
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var baseUrl = Nav.BaseUri.TrimEnd('/');
+            var response = await client.PostAsync($"{baseUrl}/api/donations/manual", content);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMsg = $"Thank you! PKR {donateAmount:N0} donated. Check your email for the receipt.";
+                campaign.RaisedAmount += donateAmount;
+                transactionId = "";
+            }
+            else
+            {
+                errorMsg = $"Error {(int)response.StatusCode}: {responseBody}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMsg = $"Exception: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task SubmitStripePayment()
+    {
+        if (campaign == null || string.IsNullOrEmpty(currentUserId)) return;
+        if (donateAmount <= 0) { errorMsg = "Please enter a valid amount."; return; }
+
+        isSubmitting = true;
+        errorMsg = "";
+
+        try
+        {
+            var jwtToken = await GetJwtTokenAsync();
+
+            using var client = new HttpClient();
+            if (!string.IsNullOrEmpty(jwtToken))
+            {
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", jwtToken);
+            }
+
+            var payload = new { campaignId = campaign.Id, amount = donateAmount };
+            var json = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var baseUrl = Nav.BaseUri.TrimEnd('/');
+            var response = await client.PostAsync($"{baseUrl}/api/donations/stripe-checkout", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadAsStringAsync();
+                var doc = JsonSerializer.Deserialize<JsonElement>(result);
+                var url = doc.GetProperty("url").GetString();
+                if (url != null) Nav.NavigateTo(url, forceLoad: true);
+            }
+            else
+            {
+                errorMsg = "Could not create payment session. Please try again.";
+            }
+        }
+        catch
+        {
+            errorMsg = "Something went wrong. Please try again.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private static string FormatMoney(decimal v)
+    {
+        if (v >= 1_000_000) return (v / 1_000_000m).ToString("0.#") + "M";
+        if (v >= 1_000) return (v / 1_000m).ToString("0.#") + "K";
+        return v.ToString("N0");
+    }
+
+    private static string FormatPreset(decimal v)
+    {
+        if (v >= 1_000) return (v / 1_000m).ToString("0.#") + "K";
+        return v.ToString("N0");
+    }
+}

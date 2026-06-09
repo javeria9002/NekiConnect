@@ -1,105 +1,81 @@
 ﻿@inherits LayoutComponentBase
+@using NekiConnect.Models
 @inject IAdminService AdminService
+@inject NavigationManager Nav
 
-
-
-<div class="admin-shell">
-
-    <!-- Dark sidebar -->
-    <aside class="admin-sidebar">
-        <div class="side-head">
-            <div class="side-avatar">
-                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<div class="admin-layout">
+    <div class="admin-sidebar">
+        <div class="admin-sidebar-profile">
+            <div class="admin-avatar">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
             </div>
-            <div class="side-info">
-                <div class="side-name">Super Admin</div>
-                <div class="side-role">Platform Control Panel</div>
-            </div>
+            <div class="admin-sidebar-name">Super Admin</div>
+            <div class="admin-sidebar-role">Platform Control Panel</div>
         </div>
 
-        <nav class="side-nav">
-            <NavLink class="nav-link" href="/admin/dashboard" Match="NavLinkMatch.All">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="3" y="3" width="7" height="7" rx="1" />
-                    <rect x="14" y="3" width="7" height="7" rx="1" />
-                    <rect x="14" y="14" width="7" height="7" rx="1" />
-                    <rect x="3" y="14" width="7" height="7" rx="1" />
+        <nav class="admin-nav">
+            <a href="/admin/dashboard" class="@IsActive("/admin/dashboard")">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
                 </svg>
-                <span>Dashboard</span>
-            </NavLink>
-
-            <NavLink class="nav-link" href="/admin/ngo-requests">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                Dashboard
+            </a>
+            <a href="/admin/ngo-requests" class="@IsActive("/admin/ngo-requests")">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M3 21h18" />
                     <path d="M5 21V7l8-4v18" />
                     <path d="M19 21V11l-6-4" />
                 </svg>
-                <span>NGO Requests</span>
+                NGO Requests
                 @if (pendingNGOs > 0)
                 {
-                    <span class="nav-badge">@pendingNGOs</span>
+                    <span class="admin-nav-badge">@pendingNGOs</span>
                 }
-            </NavLink>
-
-            <NavLink class="nav-link" href="/admin/users">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            </a>
+            <a href="/admin/users" class="@IsActive("/admin/users")">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                     <circle cx="9" cy="7" r="4" />
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
-                <span>All Users</span>
-            </NavLink>
-
-            <NavLink class="nav-link" href="/admin/donations">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                All Users
+            </a>
+            <a href="/admin/donations" class="@IsActive("/admin/donations")">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
-                <span>All Donations</span>
-            </NavLink>
-
-            <NavLink class="nav-link" href="/admin/ngos">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                All Donations
+            </a>
+            <a href="/admin/ngos" class="@IsActive("/admin/ngos")">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M3 21h18" />
                     <path d="M5 21V7l8-4v18" />
                     <path d="M19 21V11l-6-4" />
                 </svg>
-                <span>All NGOs</span>
-            </NavLink>
+                All NGOs
+            </a>
         </nav>
 
-        <a class="side-logout" href="/account/logout">
-            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            <span>Logout</span>
-        </a>
-    </aside>
+        <div class="admin-logout">
+            <a href="/account/logout">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Logout
+            </a>
+        </div>
+    </div>
 
-    <!-- Content -->
     <div class="admin-content">
-        <header class="admin-topbar">
-            <div class="crumb">Admin Panel <span class="sep">&rsaquo;</span> NekiConnect Platform</div>
-            <div class="topbar-right">
-                <button class="bell">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                    </svg>
-                    @if (pendingNGOs > 0)
-                    {
-                        <span class="bell-dot">@pendingNGOs</span>
-                    }
-                </button>
-                <div class="sa-avatar">SA</div>
-            </div>
-        </header>
-
-        <main class="admin-main">@Body</main>
+        @Body
     </div>
 </div>
 
@@ -110,4 +86,7 @@
     {
         pendingNGOs = await AdminService.GetPendingNGOsCountAsync();
     }
+
+    private string IsActive(string path) =>
+        Nav.Uri.Contains(path) ? "active" : "";
 }

@@ -83,6 +83,12 @@ namespace NekiConnect.Services
 
             if (campaign != null)
             {
+                var donations = db.Donations.Where(d => d.CampaignId == id);
+                db.Donations.RemoveRange(donations);
+
+                var apps = db.VolunteerApplications.Where(a => a.CampaignId == id);
+                db.VolunteerApplications.RemoveRange(apps);
+
                 db.Campaigns.Remove(campaign);
                 await db.SaveChangesAsync();
             }

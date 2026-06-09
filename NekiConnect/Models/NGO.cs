@@ -56,6 +56,9 @@ namespace NekiConnect.Models
         [StringLength(500)]
         public string? RejectionReason { get; set; }
 
+        [StringLength(500)]
+        public string? SuspensionReason { get; set; }
+
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

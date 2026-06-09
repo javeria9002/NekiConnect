@@ -7,8 +7,6 @@
 @inject AuthenticationStateProvider AuthProvider
 @attribute [Authorize(Roles = "NGO")]
 
-<Navbar/>
-
 <div class="cp-page">
 
     <!-- Header -->
@@ -171,7 +169,7 @@
                             </svg>
                             Edit
                         </button>
-                        <button class="act del" @onclick="() => DeleteAsync(c.Id)">
+                        <button class="act del" @onclick="() => AskDelete(c.Id, c.Title)">
                             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <polyline points="3 6 5 6 21 6" />
                                 <path d="M19 6l-1 14H6L5 6" />
@@ -187,6 +185,33 @@
     }
 </div>
 
+<!-- Confirm Delete Modal -->
+@if (pendingDeleteId is not null)
+{
+    <div class="del-overlay">
+        <div class="del-modal">
+            <div class="del-icon">
+                <svg width="32" height="32" fill="none" stroke="#dc2626" stroke-width="1.5" viewBox="0 0 24 24">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14H6L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4h6v2" />
+                </svg>
+            </div>
+            <h3 class="del-title">Delete Campaign?</h3>
+            <p class="del-campaign-name">"@pendingDeleteTitle"</p>
+            <p class="del-sub">This cannot be undone. All donations and volunteer applications linked to this campaign will also be removed.</p>
+            <div class="del-actions">
+                <button class="del-cancel" @onclick="CancelDelete">Cancel</button>
+                <button class="del-confirm" @onclick="ConfirmDelete" disabled="@isDeleting">
+                    @(isDeleting ? "Deleting..." : "Yes, Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private NGO? ngo;
     private List<Campaign> campaigns = new();
@@ -194,6 +219,10 @@
     private Campaign? editing;
     private bool showForm;
     private string search = "";
+
+    private int? pendingDeleteId;
+    private string pendingDeleteTitle = "";
+    private bool isDeleting;
 
     private int activeCount => campaigns.Count(c => c.Status == "Upcoming");
     private int completedCount => campaigns.Count(c => c.Status == "Completed");
@@ -258,9 +287,26 @@
         showForm = false;
     }
 
-    private async Task DeleteAsync(int id)
+    private void AskDelete(int id, string title)
     {
-        await CampaignService.DeleteCampaignAsync(id);
+        pendingDeleteId = id;
+        pendingDeleteTitle = title;
+    }
+
+    private void CancelDelete()
+    {
+        pendingDeleteId = null;
+        pendingDeleteTitle = "";
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (pendingDeleteId is null) return;
+        isDeleting = true;
+        await CampaignService.DeleteCampaignAsync(pendingDeleteId.Value);
+        isDeleting = false;
+        pendingDeleteId = null;
+        pendingDeleteTitle = "";
         await LoadAsync();
     }
 

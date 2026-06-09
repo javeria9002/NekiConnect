@@ -77,7 +77,7 @@ namespace NekiConnect.Services
             await db.SaveChangesAsync();
         }
 
-        // ── Delete ──
+        // ── Delete 
         public async Task DeleteAsync(int id)
         {
             await using var db = await _factory.CreateDbContextAsync();
@@ -86,6 +86,11 @@ namespace NekiConnect.Services
 
             if (ev != null)
             {
+                // ✅ Delete related volunteer applications first
+                var applications = db.VolunteerApplications.Where(a => a.EventId == id);
+                db.VolunteerApplications.RemoveRange(applications);
+
+                // ✅ Finally delete the event
                 db.Events.Remove(ev);
                 await db.SaveChangesAsync();
             }

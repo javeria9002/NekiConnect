@@ -26,19 +26,16 @@
                         @onclick='() => SwitchTab("donor")'>
                     Donor
                 </button>
-
                 <button type="button" class="tab-btn @(ActiveTab == "ngo" ? "active" : "")"
                         @onclick='() => SwitchTab("ngo")'>
                     NGO
                 </button>
-
                 <button type="button" class="tab-btn @(ActiveTab == "admin" ? "active" : "")"
                         @onclick='() => SwitchTab("admin")'>
                     Admin
                 </button>
             </div>
 
-            @* Real HTTP POST to Razor Page — cookie must be set here, not in SignalR *@
             <form method="post" action="/account/login">
                 <input type="hidden" name="Role" value="@ActiveTab" />
 
@@ -81,18 +78,15 @@
                 <button type="submit" class="submit-btn">Sign In →</button>
             </form>
 
-            @* ✅ Register link — only show for donor and ngo tabs, not admin *@
             @if (ActiveTab != "admin")
             {
                 <p class="slink">Don't have an account? <a href="/register?tab=@ActiveTab">Register</a></p>
             }
-
         </div>
     </div>
 </div>
 
 @code {
-
     [SupplyParameterFromQuery] private string? error { get; set; }
 
     private string ActiveTab = "donor";
@@ -105,6 +99,10 @@
         "suspended" => "Account suspended.",
         "wrongtab" => "Wrong role selected.",
         "forbidden" => "You do not have access to that page.",
+        "ngo_pending" => "Your NGO registration is under review. You'll be notified once approved.",
+        "ngo_rejected" => "Your NGO registration was not approved. Please contact support.",        
+        "ngo_not_found" => "No NGO profile found for this account.",   
+        "ngo_suspended" => "Your NGO has been suspended. Please contact support for more information.",  
         _ => ""
     };
 

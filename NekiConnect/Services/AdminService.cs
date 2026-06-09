@@ -49,12 +49,13 @@ namespace NekiConnect.Services
             await db.SaveChangesAsync();
         }
 
-        public async Task SuspendNGOAsync(int ngoId)
+        public async Task SuspendNGOAsync(int ngoId, string reason)
         {
             await using var db = await _factory.CreateDbContextAsync();
             var ngo = await db.NGOs.FindAsync(ngoId);
             if (ngo is null) return;
             ngo.Status = "Suspended";
+            ngo.SuspensionReason = reason;  // ✅ save reason
             await db.SaveChangesAsync();
         }
 

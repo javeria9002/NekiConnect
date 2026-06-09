@@ -22,6 +22,8 @@ builder.Services.AddScoped(sp =>
     sp.GetRequiredService<IDbContextFactory<ApplicationDbContext>>()
       .CreateDbContext());
 
+builder.Services.AddHttpClient();
+
 //
 // IDENTITY (DB ONLY)
 //

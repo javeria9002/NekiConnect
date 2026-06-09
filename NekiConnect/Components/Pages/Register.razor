@@ -12,176 +12,223 @@
 
 <Navbar />
 
-<div class="pg">
-    <div class="page-body">
-        <div class="pico">
-            <svg width="24" height="24" fill="white" viewBox="0 0 24 24">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </svg>
-        </div>
-        <h1 class="ptitle">Create Account</h1>
-        <p class="psub">Join NekiConnect and start making a difference</p>
+<div class="register-page">
+    <div class="register-bg-shape shape-1"></div>
+    <div class="register-bg-shape shape-2"></div>
 
-        <div class="card">
-            @if (!string.IsNullOrEmpty(SuccessMessage))
-            {
-                <div class="alert-suc">✓ @SuccessMessage</div>
-            }
-            @if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                <div class="alert-err">⚠ @ErrorMessage</div>
-            }
-
-            <p class="rl">Register as</p>
-            <div class="tabs">
-                <button type="button" class="tab-btn @(ActiveTab == "donor" ? "active" : "")"
-                        @onclick='() => SwitchTab("donor")'>
-                    Donor / Volunteer
-                </button>
-                <button type="button" class="tab-btn @(ActiveTab == "ngo" ? "active" : "")"
-                        @onclick='() => SwitchTab("ngo")'>
-                    NGO Organisation
-                </button>
+    <div class="register-container">
+        <!-- Left Brand Panel - UNCHANGED -->
+        <div class="brand-panel">
+            <div class="brand-logo">
+                <div class="logo-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                </div>
+                <span class="logo-text">NekiConnect</span>
             </div>
 
-            <!-- DONOR FORM -->
-            @if (ActiveTab == "donor")
-            {
-                <EditForm Model="DonorModel" OnValidSubmit="HandleDonorSubmit">
-                    <DataAnnotationsValidator />
+            <div class="brand-content">
+                <h2>Small acts,<br>big impact.</h2>
+                <p>Join thousands of changemakers creating a ripple of kindness — donate, volunteer, and uplift communities together.</p>
 
-                    <div class="fg">
-                        <label>Full Name</label>
-                        <InputText @bind-Value="DonorModel.FullName" placeholder="Ahmed Khan" />
-                        <ValidationMessage For="() => DonorModel.FullName" class="field-err" />
+                <div class="brand-stats">
+                    <div class="stat">
+                        <span class="stat-number">12k+</span>
+                        <span class="stat-label">Volunteers</span>
                     </div>
-
-                    <div class="frow">
-                        <div class="fg">
-                            <label>Email Address</label>
-                            <InputText @bind-Value="DonorModel.Email" placeholder="you@example.com" />
-                            <ValidationMessage For="() => DonorModel.Email" class="field-err" />
-                        </div>
-                        <div class="fg">
-                            <label>Phone Number <span class="opt-note">(optional)</span></label>
-                            <InputText @bind-Value="DonorModel.Phone" placeholder="+92 300 0000000" />
-                        </div>
+                    <div class="stat">
+                        <span class="stat-number">340+</span>
+                        <span class="stat-label">NGO Partners</span>
                     </div>
-
-                    <div class="fg">
-                        <label>City</label>
-                        <InputText @bind-Value="DonorModel.City" placeholder="Islamabad" />
-                        <ValidationMessage For="() => DonorModel.City" class="field-err" />
+                    <div class="stat">
+                        <span class="stat-number">180+</span>
+                        <span class="stat-label">Campaigns</span>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <div class="frow">
-                        <div class="fg">
-                            <label>Password</label>
-                            <InputText type="password" @bind-Value="DonorModel.Password" placeholder="Create a strong password" />
-                            <ValidationMessage For="() => DonorModel.Password" class="field-err" />
-                        </div>
-                        <div class="fg">
-                            <label>Confirm Password</label>
-                            <InputText type="password" @bind-Value="DonorModel.ConfirmPassword" placeholder="Repeat password" />
-                            <ValidationMessage For="() => DonorModel.ConfirmPassword" class="field-err" />
-                        </div>
-                    </div>
+        <!-- Right Form Panel - FIXED SPACING -->
+        <div class="form-panel">
+            <div class="register-header">
+                <div class="header-heart">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="#ffffff">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                </div>
+                <h3>Create Account</h3>
+                <p>Join NekiConnect and start making a difference</p>
+            </div>
 
-                    <div class="trow">
-                        <InputCheckbox @bind-Value="DonorModel.AgreeTerms" id="d-terms" />
-                        <label for="d-terms">I agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</label>
-                    </div>
-                    <ValidationMessage For="() => DonorModel.AgreeTerms" class="field-err" />
+            <div class="register-card">
+                @if (!string.IsNullOrEmpty(SuccessMessage))
+                {
+                    <div class="alert-suc">✓ @SuccessMessage</div>
+                }
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="alert-err">⚠ @ErrorMessage</div>
+                }
 
-                    <button type="submit" class="submit-btn" disabled="@IsSubmitting">
-                        @(IsSubmitting ? "Creating..." : "Create Donor Account →")
+                <p class="register-as">REGISTER AS</p>
+                <div class="role-tabs">
+                    <button type="button" class="role-tab @(ActiveTab == "donor" ? "active" : "")"
+                            @onclick='() => SwitchTab("donor")'>
+                        <span>Donor / Volunteer</span>
                     </button>
-                    <p class="slink">Already have an account? <a href="/login?tab=donor">Sign In</a></p>
-                </EditForm>
-            }
-
-            <!-- NGO FORM -->
-            @if (ActiveTab == "ngo")
-            {
-                <div class="info-box">ℹ NGO registrations are reviewed by our admin team. You'll be notified within 2–3 business days.</div>
-
-                <EditForm Model="NgoModel" OnValidSubmit="HandleNgoSubmit">
-                    <DataAnnotationsValidator />
-
-                    <div class="fg">
-                        <label>NGO Name</label>
-                        <InputText @bind-Value="NgoModel.NgoName" placeholder="Welfare Trust" />
-                        <ValidationMessage For="() => NgoModel.NgoName" class="field-err" />
-                    </div>
-
-                    <div class="frow">
-                        <div class="fg">
-                            <label>Contact Email</label>
-                            <InputText @bind-Value="NgoModel.Email" placeholder="info@yourNGO.org" />
-                            <ValidationMessage For="() => NgoModel.Email" class="field-err" />
-                        </div>
-                        <div class="fg">
-                            <label>Phone</label>
-                            <InputText @bind-Value="NgoModel.Phone" placeholder="+92 300 0000000" />
-                            <ValidationMessage For="() => NgoModel.Phone" class="field-err" />
-                        </div>
-                    </div>
-
-                    <div class="frow">
-                        <div class="fg">
-                            <label>City</label>
-                            <InputText @bind-Value="NgoModel.City" placeholder="Karachi" />
-                            <ValidationMessage For="() => NgoModel.City" class="field-err" />
-                        </div>
-                        <div class="fg">
-                            <label>Category</label>
-                            <InputSelect @bind-Value="NgoModel.Category">
-                                <option value="">Select category</option>
-                                <option>Education</option>
-                                <option>Health / Medical</option>
-                                <option>Food &amp; Nutrition</option>
-                                <option>Disaster Relief</option>
-                                <option>Women Empowerment</option>
-                                <option>Child Welfare</option>
-                                <option>Environment</option>
-                                <option>All</option>
-                                <option>Other</option>
-                            </InputSelect>
-                            <ValidationMessage For="() => NgoModel.Category" class="field-err" />
-                        </div>
-                    </div>
-
-                    <div class="fg">
-                        <label>Registration Number</label>
-                        <InputText @bind-Value="NgoModel.RegistrationNumber" placeholder="NGO-12345" />
-                        <ValidationMessage For="() => NgoModel.RegistrationNumber" class="field-err" />
-                    </div>
-
-                    <div class="frow">
-                        <div class="fg">
-                            <label>Password</label>
-                            <InputText type="password" @bind-Value="NgoModel.Password" placeholder="Create a strong password" />
-                            <ValidationMessage For="() => NgoModel.Password" class="field-err" />
-                        </div>
-                        <div class="fg">
-                            <label>Confirm Password</label>
-                            <InputText type="password" @bind-Value="NgoModel.ConfirmPassword" placeholder="Repeat password" />
-                            <ValidationMessage For="() => NgoModel.ConfirmPassword" class="field-err" />
-                        </div>
-                    </div>
-
-                    <div class="trow">
-                        <InputCheckbox @bind-Value="NgoModel.AgreeTerms" id="n-terms" />
-                        <label for="n-terms">I agree to the <a href="/terms">Terms</a> and confirm this NGO is legally registered in Pakistan.</label>
-                    </div>
-                    <ValidationMessage For="() => NgoModel.AgreeTerms" class="field-err" />
-
-                    <button type="submit" class="submit-btn" disabled="@IsSubmitting">
-                        @(IsSubmitting ? "Submitting..." : "Submit NGO Registration →")
+                    <button type="button" class="role-tab @(ActiveTab == "ngo" ? "active" : "")"
+                            @onclick='() => SwitchTab("ngo")'>
+                        <span>NGO Organisation</span>
                     </button>
-                    <p class="slink">Already have an account? <a href="/login?tab=ngo">Sign In</a></p>
-                </EditForm>
-            }
+                </div>
+
+                <!-- DONOR FORM -->
+                @if (ActiveTab == "donor")
+                {
+                    <EditForm Model="DonorModel" OnValidSubmit="HandleDonorSubmit">
+                        <DataAnnotationsValidator />
+
+                        <div class="input-group">
+                            <label>Full Name</label>
+                            <InputText @bind-Value="DonorModel.FullName" placeholder="Ahmed Khan" />
+                            <ValidationMessage For="() => DonorModel.FullName" class="field-error" />
+                        </div>
+
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label>Email Address</label>
+                                <InputText @bind-Value="DonorModel.Email" placeholder="you@example.com" />
+                                <ValidationMessage For="() => DonorModel.Email" class="field-error" />
+                            </div>
+                            <div class="input-group">
+                                <label>Phone Number <span class="optional">(optional)</span></label>
+                                <InputText @bind-Value="DonorModel.Phone" placeholder="+92 300 0000000" />
+                                <ValidationMessage For="() => DonorModel.Phone" class="field-error" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label>City</label>
+                                <InputText @bind-Value="DonorModel.City" placeholder="Islamabad" />
+                                <ValidationMessage For="() => DonorModel.City" class="field-error" />
+                            </div>
+                            <div class="input-group">
+                                <label>Password</label>
+                                <InputText type="password" @bind-Value="DonorModel.Password" placeholder="Create a strong password" />
+                                <ValidationMessage For="() => DonorModel.Password" class="field-error" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label>Confirm Password</label>
+                                <InputText type="password" @bind-Value="DonorModel.ConfirmPassword" placeholder="Repeat your password" />
+                                <ValidationMessage For="() => DonorModel.ConfirmPassword" class="field-error" />
+                            </div>
+                            <div class="input-group"></div>
+                        </div>
+
+                        <div class="checkbox-wrapper">
+                            <InputCheckbox @bind-Value="DonorModel.AgreeTerms" id="d-terms" />
+                            <label for="d-terms">I agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.</label>
+                        </div>
+                        <ValidationMessage For="() => DonorModel.AgreeTerms" class="field-error" />
+
+                        <button type="submit" class="submit-btn" disabled="@IsSubmitting">
+                            @(IsSubmitting ? "Creating account..." : "Create Donor Account →")
+                        </button>
+                        <p class="signin-link">Already have an account? <a href="/login?tab=donor">Sign In</a></p>
+                    </EditForm>
+                }
+
+                <!-- NGO FORM - Phone now REQUIRED and same format -->
+                @if (ActiveTab == "ngo")
+                {
+                    <div class="info-note">
+                        <span class="info-icon">ℹ️</span>
+                        NGO registrations are reviewed by our admin team. You'll be notified within 2–3 business days upon approval.
+                    </div>
+
+                    <EditForm Model="NgoModel" OnValidSubmit="HandleNgoSubmit">
+                        <DataAnnotationsValidator />
+
+                        <div class="input-group">
+                            <label>NGO Name</label>
+                            <InputText @bind-Value="NgoModel.NgoName" placeholder="e.g. Welfare Trust of Pakistan" />
+                            <ValidationMessage For="() => NgoModel.NgoName" class="field-error" />
+                        </div>
+
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label>Email Address</label>
+                                <InputText @bind-Value="NgoModel.Email" placeholder="info@yourNGO.org" />
+                                <ValidationMessage For="() => NgoModel.Email" class="field-error" />
+                            </div>
+                            <div class="input-group">
+                                <label>Phone Number</label>
+                                <InputText @bind-Value="NgoModel.Phone" placeholder="+92 300 0000000" />
+                                <ValidationMessage For="() => NgoModel.Phone" class="field-error" />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label>City</label>
+                                <InputText @bind-Value="NgoModel.City" placeholder="Karachi" />
+                                <ValidationMessage For="() => NgoModel.City" class="field-error" />
+                            </div>
+                            <div class="input-group">
+                                <label>Category</label>
+                                <InputSelect @bind-Value="NgoModel.Category">
+                                    <option value="">Select category</option>
+                                    <option>Education</option>
+                                    <option>Health / Medical</option>
+                                    <option>Food &amp; Nutrition</option>
+                                    <option>Disaster Relief</option>
+                                    <option>Women Empowerment</option>
+                                    <option>Child Welfare</option>
+                                    <option>Environment</option>
+                                    <option>All</option>
+                                    <option>Other</option>
+                                </InputSelect>
+                                <ValidationMessage For="() => NgoModel.Category" class="field-error" />
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Registration Number</label>
+                            <InputText @bind-Value="NgoModel.RegistrationNumber" placeholder="NGO-12345" />
+                            <ValidationMessage For="() => NgoModel.RegistrationNumber" class="field-error" />
+                        </div>
+
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label>Password</label>
+                                <InputText type="password" @bind-Value="NgoModel.Password" placeholder="Create a strong password" />
+                                <ValidationMessage For="() => NgoModel.Password" class="field-error" />
+                            </div>
+                            <div class="input-group">
+                                <label>Confirm Password</label>
+                                <InputText type="password" @bind-Value="NgoModel.ConfirmPassword" placeholder="Repeat your password" />
+                                <ValidationMessage For="() => NgoModel.ConfirmPassword" class="field-error" />
+                            </div>
+                        </div>
+
+                        <div class="checkbox-wrapper">
+                            <InputCheckbox @bind-Value="NgoModel.AgreeTerms" id="n-terms" />
+                            <label for="n-terms">I agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>. I confirm this NGO is a legally registered organisation in Pakistan.</label>
+                        </div>
+                        <ValidationMessage For="() => NgoModel.AgreeTerms" class="field-error" />
+
+                        <button type="submit" class="submit-btn" disabled="@IsSubmitting">
+                            @(IsSubmitting ? "Submitting..." : "Submit NGO Registration →")
+                        </button>
+                        <p class="signin-link">Already have an account? <a href="/login?tab=ngo">Sign In</a></p>
+                    </EditForm>
+                }
+            </div>
         </div>
     </div>
 </div>
@@ -199,7 +246,6 @@
 
     protected override void OnInitialized()
     {
-        // ✅ Set tab from query string e.g. /register?tab=ngo
         if (tab?.ToLower() == "ngo")
             ActiveTab = "ngo";
     }
@@ -302,20 +348,32 @@
         IsSubmitting = false;
     }
 
+    // Shared validation patterns
+    private const string PasswordRegex = @"^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$";
+    private const string PasswordError = "Password must be at least 8 characters and include a letter, a number and a special character.";
+    private const string EmailRegex = @"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.(com|org|net|edu|gov|pk)$";
+    private const string EmailError = "Enter a valid email (e.g. you@example.com, info@ngo.org or .pk).";
+    private const string PhoneRegex = @"^(\+92|0)3\d{2}[\s-]?\d{3}[\s-]?\d{4}$";
+    private const string PhoneError = "Enter a valid Pakistani number (e.g. +92 300 0000000 or 0300 0000000).";
+
     public class DonorInputModel
     {
         [Required(ErrorMessage = "Full name is required")]
         public string FullName { get; set; } = string.Empty;
 
-        [Required, EmailAddress(ErrorMessage = "Invalid email")]
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email")]
+        [RegularExpression(EmailRegex, ErrorMessage = EmailError)]
         public string Email { get; set; } = string.Empty;
 
+        [RegularExpression(@"^$|^(\+92|0)3\d{2}[\s-]?\d{3}[\s-]?\d{4}$", ErrorMessage = PhoneError)]
         public string? Phone { get; set; }
 
         [Required(ErrorMessage = "City is required")]
         public string City { get; set; } = string.Empty;
 
-        [Required, MinLength(8, ErrorMessage = "Min 8 characters")]
+        [Required(ErrorMessage = "Password is required")]
+        [RegularExpression(PasswordRegex, ErrorMessage = PasswordError)]
         public string Password { get; set; } = string.Empty;
 
         [Required, Compare(nameof(Password), ErrorMessage = "Passwords don't match")]
@@ -330,13 +388,30 @@
         [Required(ErrorMessage = "NGO name is required")]
         public string NgoName { get; set; } = string.Empty;
 
-        [Required, EmailAddress] public string Email { get; set; } = string.Empty;
-        [Required] public string Phone { get; set; } = string.Empty;
-        [Required] public string City { get; set; } = string.Empty;
-        [Required(ErrorMessage = "Select a category")] public string Category { get; set; } = string.Empty;
-        [Required] public string RegistrationNumber { get; set; } = string.Empty;
-        [Required, MinLength(8)] public string Password { get; set; } = string.Empty;
-        [Required, Compare(nameof(Password), ErrorMessage = "Passwords don't match")] public string ConfirmPassword { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email")]
+        [RegularExpression(EmailRegex, ErrorMessage = EmailError)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Phone number is required")]
+        [RegularExpression(PhoneRegex, ErrorMessage = PhoneError)]
+        public string Phone { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "City is required")]
+        public string City { get; set; } = string.Empty;
+        
+        [Required(ErrorMessage = "Select a category")]
+        public string Category { get; set; } = string.Empty;
+        
+        [Required(ErrorMessage = "Registration number is required")]
+        public string RegistrationNumber { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required")]
+        [RegularExpression(PasswordRegex, ErrorMessage = PasswordError)]
+        public string Password { get; set; } = string.Empty;
+
+        [Required, Compare(nameof(Password), ErrorMessage = "Passwords don't match")]
+        public string ConfirmPassword { get; set; } = string.Empty;
 
         [Range(typeof(bool), "true", "true", ErrorMessage = "You must agree")]
         public bool AgreeTerms { get; set; } = false;

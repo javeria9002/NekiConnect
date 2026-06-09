@@ -5,42 +5,65 @@
 @inject IEmailService EmailService
 @attribute [Authorize(Roles = "Admin")]
 
-<Navbar />
-
 <div class="rq-page">
 
     <h1 class="rq-title">NGO Registration Requests</h1>
-    <p class="rq-sub">Review and approve or reject NGO registration applications.</p>
+    <p class="rq-sub">Review and approve, reject, or suspend NGO accounts.</p>
 
     <!-- Stat cards -->
     <div class="stat-row">
         <div class="stat-card amber">
             <div class="stat-ico amber">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                </svg>
             </div>
             <div class="stat-num amber-t">@pendingCount</div>
             <div class="stat-lbl">Pending</div>
         </div>
         <div class="stat-card green">
             <div class="stat-ico green">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                </svg>
             </div>
             <div class="stat-num green-t">@approvedCount</div>
             <div class="stat-lbl">Approved</div>
         </div>
         <div class="stat-card red">
             <div class="stat-ico red">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
             </div>
             <div class="stat-num red-t">@rejectedCount</div>
             <div class="stat-lbl">Rejected</div>
+        </div>
+        <!-- ✅ New suspended stat card -->
+        <div class="stat-card orange">
+            <div class="stat-ico orange">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                </svg>
+            </div>
+            <div class="stat-num orange-t">@suspendedCount</div>
+            <div class="stat-lbl">Suspended</div>
         </div>
     </div>
 
     @if (pendingCount > 0)
     {
         <div class="await-banner">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
             <span><strong>@pendingCount request(s)</strong> require your review and decision.</span>
         </div>
     }
@@ -48,13 +71,20 @@
     <!-- Search + filters -->
     <div class="filter-bar">
         <div class="search-wrap">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-            <input class="search-inp" placeholder="Search NGO name, city..." @bind="search" @bind:event="oninput" />
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input class="search-inp" placeholder="Search NGO name, city..."
+                   @bind="search" @bind:event="oninput" />
         </div>
         <div class="filter-btns">
-            @foreach (var f in new[] { "All", "Pending", "Approved", "Rejected" })
+            @foreach (var f in new[] { "All", "Pending", "Approved", "Rejected", "Suspended" })
             {
-                <button class="fbtn @(filter == f ? "active" : "")" @onclick="() => filter = f">@f</button>
+                <button class="fbtn @(filter == f ? "active" : "")"
+                        @onclick="() => filter = f">
+                    @f
+                </button>
             }
         </div>
     </div>
@@ -70,10 +100,15 @@
         {
             <div class="rq-card @StatusBorder(n.Status)">
                 <div class="rq-row">
+
                     <!-- identity -->
                     <div class="rq-id">
                         <span class="rq-ico">
-                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /></svg>
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M3 21h18" />
+                                <path d="M5 21V7l8-4v18" />
+                                <path d="M19 21V11l-6-4" />
+                            </svg>
                         </span>
                         <div class="rq-id-info">
                             <div class="rq-name">@n.Name</div>
@@ -91,7 +126,10 @@
 
                     <!-- docs + status -->
                     <div class="rq-docs">
-                        <div class="docs-line"><span class="lbl">Documents:</span> @(string.IsNullOrEmpty(n.CertificateUrl) ? "None" : "Uploaded")</div>
+                        <div class="docs-line">
+                            <span class="lbl">Documents:</span>
+                            @(string.IsNullOrEmpty(n.CertificateUrl) ? "None" : "Uploaded")
+                        </div>
                         <span class="badge @StatusBadge(n.Status)">@n.Status</span>
                     </div>
 
@@ -100,31 +138,108 @@
                         @if (!string.IsNullOrEmpty(n.CertificateUrl))
                         {
                             <a class="act view" href="@n.CertificateUrl" target="_blank" rel="noopener">
-                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
                                 View Docs
                             </a>
                         }
+
                         @if (n.Status == "Pending")
                         {
                             <button class="act approve" @onclick="() => ApproveAsync(n)">
-                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
                                 Approve
                             </button>
                             <button class="act reject" @onclick="() => StartReject(n.Id)">
-                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
                                 Reject
+                            </button>
+                        }
+
+                        @* ✅ Suspend — only for Approved NGOs *@
+                        @if (n.Status == "Approved")
+                        {
+                            <button class="act suspend" @onclick="() => StartSuspend(n.Id)">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                                </svg>
+                                Suspend
+                            </button>
+                        }
+
+                        @* ✅ Unsuspend — only for Suspended NGOs *@
+                        @if (n.Status == "Suspended")
+                        {
+                            <button class="act approve" @onclick="() => UnsuspendAsync(n)">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                Unsuspend
                             </button>
                         }
                     </div>
                 </div>
 
-                <!-- inline reject reason -->
+                @* ✅ Show suspension reason on suspended cards *@
+                @if (n.Status == "Suspended" && !string.IsNullOrEmpty(n.SuspensionReason))
+                {
+                    <div class="suspension-reason">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <span><strong>Suspension Reason:</strong> @n.SuspensionReason</span>
+                    </div>
+                }
+
+                @* ✅ Show rejection reason on rejected cards *@
+                @if (n.Status == "Rejected" && !string.IsNullOrEmpty(n.RejectionReason))
+                {
+                    <div class="rejection-reason">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="15" y1="9" x2="9" y2="15" />
+                            <line x1="9" y1="9" x2="15" y2="15" />
+                        </svg>
+                        <span><strong>Rejection Reason:</strong> @n.RejectionReason</span>
+                    </div>
+                }
+
+                <!-- inline reject reason box -->
                 @if (rejectingId == n.Id)
                 {
                     <div class="reject-box">
-                        <input class="reject-inp" placeholder="Reason for rejection (sent to the NGO)..." @bind="rejectReason" />
-                        <button class="btn-confirm" @onclick="() => ConfirmRejectAsync(n)">Confirm Reject</button>
+                        <input class="reject-inp"
+                               placeholder="Reason for rejection (sent to the NGO)..."
+                               @bind="rejectReason" />
+                        <button class="btn-confirm" @onclick="() => ConfirmRejectAsync(n)">
+                            Confirm Reject
+                        </button>
                         <button class="btn-cancel" @onclick="CancelReject">Cancel</button>
+                    </div>
+                }
+
+                @* ✅ Inline suspend reason box *@
+                @if (suspendingId == n.Id)
+                {
+                    <div class="reject-box">
+                        <input class="reject-inp"
+                               placeholder="Reason for suspension (sent to the NGO)..."
+                               @bind="suspendReason" />
+                        <button class="btn-confirm suspend-confirm"
+                                @onclick="() => ConfirmSuspendAsync(n)">
+                            Confirm Suspend
+                        </button>
+                        <button class="btn-cancel" @onclick="CancelSuspend">Cancel</button>
                     </div>
                 }
             </div>
@@ -136,12 +251,17 @@
     private List<NGO> ngos = new();
     private string filter = "All";
     private string search = "";
+
     private int rejectingId;
     private string rejectReason = "";
+
+    private int suspendingId;       // ✅ new
+    private string suspendReason = ""; // ✅ new
 
     private int pendingCount => ngos.Count(n => n.Status == "Pending");
     private int approvedCount => ngos.Count(n => n.Status == "Approved");
     private int rejectedCount => ngos.Count(n => n.Status == "Rejected");
+    private int suspendedCount => ngos.Count(n => n.Status == "Suspended"); // ✅ new
 
     private List<NGO> Filtered =>
         ngos.Where(n => filter == "All" || n.Status == filter)
@@ -166,6 +286,7 @@
     {
         rejectingId = id;
         rejectReason = "";
+        suspendingId = 0; // close suspend box if open
     }
 
     private async Task ConfirmRejectAsync(NGO n)
@@ -184,17 +305,52 @@
         rejectReason = "";
     }
 
+    // ✅ Suspend methods
+    private void StartSuspend(int id)
+    {
+        suspendingId = id;
+        suspendReason = "";
+        rejectingId = 0; // close reject box if open
+    }
+
+    private async Task ConfirmSuspendAsync(NGO n)
+    {
+        if (string.IsNullOrWhiteSpace(suspendReason)) return;
+        await AdminService.SuspendNGOAsync(n.Id, suspendReason);
+        if (!string.IsNullOrWhiteSpace(n.ContactEmail))
+            await EmailService.SendNgoSuspendedEmailAsync(n.ContactEmail, n.Name, suspendReason);
+        CancelSuspend();
+        await LoadAsync();
+    }
+
+    private void CancelSuspend()
+    {
+        suspendingId = 0;
+        suspendReason = "";
+    }
+
+    // ✅ Unsuspend — sets back to Approved
+    private async Task UnsuspendAsync(NGO n)
+    {
+        await AdminService.ApproveNGOAsync(n.Id);
+        if (!string.IsNullOrWhiteSpace(n.ContactEmail))
+            await EmailService.SendNgoApprovedEmailAsync(n.ContactEmail, n.Name);
+        await LoadAsync();
+    }
+
     private static string StatusBorder(string s) => s switch
     {
         "Approved" => "border-green",
         "Rejected" => "border-red",
+        "Suspended" => "border-orange", // ✅ new
         _ => "border-amber"
     };
 
     private static string StatusBadge(string s) => s switch
     {
         "Approved" => "badge-approved",
-        "Rejected" => "border-red badge-rejected",
+        "Rejected" => "badge-rejected",
+        "Suspended" => "badge-suspended", // ✅ new
         _ => "badge-pending"
     };
 }

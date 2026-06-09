@@ -123,6 +123,26 @@ namespace NekiConnect.Services
             return SendAsync(toEmail, ngoName, "NGO Registration Update", html);
         }
 
+        public Task<bool> SendNgoSuspendedEmailAsync(string toEmail, string ngoName, string reason)
+        {
+            var html = $@"
+        <div style='font-family:Segoe UI,sans-serif;max-width:600px;margin:auto;padding:32px;'>
+            <h2 style='color:#dc2626;'>NGO Account Suspended ⚠</h2>
+            <p>Dear <strong>{ngoName}</strong>,</p>
+            <p>Your NGO account on NekiConnect has been <strong>suspended</strong>.</p>
+
+            <div style='background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px;margin:20px 0;'>
+                <p style='margin:0;font-weight:600;color:#dc2626;'>Reason for Suspension:</p>
+                <p style='margin-top:8px;color:#7f1d1d;'>{reason}</p>
+            </div>
+
+            <p>If you believe this is a mistake, please contact our support team.</p>
+            <p style='color:#6b7280;font-size:13px;'>NekiConnect — Connecting hearts to causes.</p>
+        </div>";
+
+            return SendAsync(toEmail, ngoName, "NGO Account Suspended — NekiConnect", html);
+        }
+
         // ── Volunteer status ──
         public Task<bool> SendVolunteerStatusAsync(string toEmail, string toName, string campaignTitle, bool accepted)
         {

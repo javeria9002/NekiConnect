@@ -321,3 +321,123 @@
         grid-template-columns: 1fr;
     }
 }
+/* ── Confirm Delete Modal ───────────────────────────────── */
+.del-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    animation: del-fade-in 0.15s ease;
+}
+
+@keyframes del-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.del-modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 28px 28px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
+    animation: del-slide-up 0.18s ease;
+}
+
+@keyframes del-slide-up {
+    from {
+        transform: translateY(12px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.del-icon {
+    width: 60px;
+    height: 60px;
+    background: #fef2f2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.del-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 6px;
+}
+
+.del-campaign-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.del-sub {
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.del-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.del-cancel {
+    flex: 1;
+    padding: 11px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 9px;
+    background: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+    .del-cancel:hover {
+        background: #f9fafb;
+    }
+
+.del-confirm {
+    flex: 1;
+    padding: 11px;
+    border: none;
+    border-radius: 9px;
+    background: #dc2626;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+    .del-confirm:hover:not(:disabled) {
+        background: #b91c1c;
+    }
+
+    .del-confirm:disabled {
+        background: #fca5a5;
+        cursor: not-allowed;
+    }

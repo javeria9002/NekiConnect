@@ -1,34 +1,34 @@
 ﻿.donor-layout {
     display: flex;
-    min-height: calc(100vh - 64px); /* ✅ subtract navbar height */
+    min-height: calc(100vh - 64px);
     font-family: 'Segoe UI', sans-serif;
     background: #f9fafb;
 }
 
 .donor-sidebar {
     width: 220px;
-    background: #fff;
-    border-right: 1px solid #e5e7eb;
+    background: #16a34a;
     display: flex;
     flex-direction: column;
     position: fixed;
-    top: 64px; /* ✅ below navbar */
+    top: 64px;
     left: 0;
-    height: calc(100vh - 64px); /* ✅ full height minus navbar */
+    height: calc(100vh - 64px);
     z-index: 50;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08);
 }
 
 .donor-sidebar-profile {
     padding: 24px 20px;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .donor-avatar {
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    background: #16a34a;
-    color: #fff;
+    background: #ffffff;
+    color: #16a34a;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -40,13 +40,14 @@
     margin-top: 10px;
     font-weight: 700;
     font-size: 14px;
-    color: #111827;
+    color: #ffffff;
 }
 
 .donor-sidebar-role {
     font-size: 12px;
-    color: #6b7280;
-    margin-top: 2px;
+    color: #dcfce7;
+    margin-top: 4px;
+    font-weight: 600;
 }
 
 .donor-nav {
@@ -59,29 +60,30 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 11px 20px;
-        color: #374151;
+        padding: 12px 20px;
+        margin: 4px 8px;
+        color: #ffffff;
         font-size: 14px;
         text-decoration: none;
-        transition: background 0.15s;
-        border-right: 3px solid transparent;
+        transition: all 0.2s ease;
+        border-radius: 8px;
     }
 
         .donor-nav a:hover {
-            background: #f9fafb;
-            color: #16a34a;
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
         }
 
         .donor-nav a.active {
-            background: #f0fdf4;
+            background: #ffffff;
             color: #16a34a;
-            font-weight: 600;
-            border-right-color: #16a34a;
+            font-weight: 700;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
         }
 
 .donor-logout {
     padding: 16px 20px;
-    border-top: 1px solid #f3f4f6;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
     margin-top: auto;
 }
 
@@ -92,19 +94,39 @@
         background: none;
         border: none;
         cursor: pointer;
-        color: #6b7280;
+        color: #ffffff;
         font-size: 14px;
         padding: 0;
         width: 100%;
+        transition: color 0.2s ease;
     }
 
         .donor-logout button:hover {
-            color: #ef4444;
+            color: #dcfce7;
         }
 
 .donor-content {
     flex: 1;
-    margin-left: 220px; /* ✅ pushed right of sidebar */
+    margin-left: 220px;
     padding: 32px;
     min-height: calc(100vh - 64px);
 }
+
+/* Scrollbar */
+
+.donor-nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.donor-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.donor-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+}
+
+    .donor-nav::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.4);
+    }

@@ -1,222 +1,567 @@
-﻿.pg {
-    background: #f8fdf9;
+﻿/* NekiConnect Green & White Theme (#16a34a) */
+.register-page {
     min-height: 100vh;
-    padding-bottom: 40px;
-}
-
-.page-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 36px 16px 0;
-}
-
-.pico {
-    width: 50px;
-    height: 50px;
-    background: #16a34a;
-    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 12px;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    padding: 2rem;
+    position: relative;
+    overflow-x: hidden;
 }
 
-.ptitle {
-    font-size: 24px;
-    font-weight: 700;
-    color: #111;
-    margin-bottom: 4px;
+.register-bg-shape {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(60px);
+    z-index: 0;
+    pointer-events: none;
 }
 
-.psub {
-    font-size: 13px;
-    color: #6b7280;
-    margin-bottom: 24px;
+.shape-1 {
+    top: -10%;
+    left: -5%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(22,163,74,0.18) 0%, rgba(22,163,74,0.05) 70%);
+    animation: float 20s ease-in-out infinite;
 }
 
-.card {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    padding: 24px 26px;
+.shape-2 {
+    bottom: -10%;
+    right: -5%;
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(22,163,74,0.14) 0%, rgba(22,163,74,0.03) 70%);
+    animation: float 18s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+    0%,100% {
+        transform: translate(0,0) rotate(0deg);
+    }
+
+    50% {
+        transform: translate(20px,-20px) rotate(5deg);
+    }
+}
+
+.register-container {
+    max-width: 1150px;
     width: 100%;
-    max-width: 480px;
-}
-
-.rl {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: #9ca3af;
-    margin-bottom: 8px;
-}
-
-.tabs {
     display: flex;
-    background: #f1f5f1;
-    border-radius: 10px;
-    padding: 3px;
-    margin-bottom: 22px;
-    gap: 2px;
+    flex-wrap: wrap;
+    align-items: stretch;
+    background: #ffffff;
+    border-radius: 2rem;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    overflow: hidden;
+    z-index: 1;
 }
 
-.tab-btn {
+/* ---- Left Brand Panel ---- */
+.brand-panel {
     flex: 1;
-    padding: 8px 10px;
+    background: linear-gradient(160deg, #0a2b1a 0%, #15803d 55%, #16a34a 100%);
+    padding: 3rem 2.5rem;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+    .brand-panel::before {
+        content: "💚";
+        font-size: 200px;
+        opacity: 0.10;
+        position: absolute;
+        bottom: -40px;
+        right: -30px;
+        pointer-events: none;
+    }
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    z-index: 1;
+}
+
+.logo-icon {
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(4px);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    color: #ffffff;
+}
+
+    .logo-icon svg {
+        fill: #ffffff;
+    }
+
+.logo-text {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.brand-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    padding: 2rem 0;
+}
+
+    .brand-content h2 {
+        font-size: 2.2rem;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+    }
+
+    .brand-content p {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        opacity: 0.9;
+        max-width: 92%;
+        margin-bottom: 0;
+    }
+
+.brand-stats {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-top: 2.5rem;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-number {
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.75;
+    margin-top: 0.15rem;
+}
+
+/* ---- Right Form Panel ---- */
+.form-panel {
+    flex: 1.35;
+    padding: 2.5rem;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.register-header {
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+
+.header-heart {
+    width: 56px;
+    height: 56px;
+    border-radius: 1rem;
+    background: #16a34a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    box-shadow: 0 8px 18px -6px rgba(22,163,74,0.55);
+}
+
+    .header-heart svg {
+        display: block;
+    }
+
+.register-header h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #14532d;
+    margin: 0 0 0.5rem 0;
+}
+
+.register-header p {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.register-card {
+    background: transparent;
+    width: 100%;
+}
+
+.register-as {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #94a3b8;
+    margin: 0 0 0.6rem 0;
+}
+
+.role-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.75rem;
+    background: #f1f5f9;
+    padding: 0.35rem;
+    border-radius: 0.9rem;
+}
+
+.role-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.7rem 0.5rem;
     border: none;
-    border-radius: 8px;
-    font-size: 13px;
+    border-radius: 0.7rem;
+    font-size: 0.88rem;
     font-weight: 600;
     cursor: pointer;
     background: transparent;
-    color: #6b7280;
+    color: #475569;
+    transition: all 0.2s ease;
 }
 
-    .tab-btn.active {
-        background: #fff;
+    .role-tab.active {
+        background: white;
         color: #16a34a;
-        border: 1px solid #d1fae5;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
-.fg {
-    margin-bottom: 13px;
+    .role-tab:hover:not(.active) {
+        background: #e6edf0;
+        color: #1e293b;
+    }
+
+/* ============================================ */
+/* ALL INPUTS - Consistent styling */
+/* ============================================ */
+
+.input-group {
+    margin-bottom: 1.25rem;
 }
 
-    .fg label {
+    .input-group label {
         display: block;
-        font-size: 12px;
+        font-size: 0.85rem;
         font-weight: 600;
-        color: #374151;
-        margin-bottom: 4px;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
     }
 
-    .fg input, .fg select {
+    .input-group input,
+    .input-group select {
         width: 100%;
-        padding: 9px 12px;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 13px;
-        color: #111;
-        background: #fff;
-        outline: none;
+        padding: 0.8rem 1rem;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 0.75rem;
+        font-size: 0.9rem;
+        font-family: inherit;
+        transition: all 0.2s;
+        background: #ffffff;
         box-sizing: border-box;
     }
 
-        .fg input:focus, .fg select:focus {
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
             border-color: #16a34a;
-            box-shadow: 0 0 0 3px rgba(22,163,74,.08);
+            box-shadow: 0 0 0 3px rgba(22,163,74,0.12);
         }
 
-.frow {
+/* Form row for 2-column layout */
+.form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 1rem;
 }
 
-.field-err {
-    font-size: 11px;
+/* ============================================ */
+/* DONOR FORM SPECIFIC SPACING RULES */
+/* ============================================ */
+
+/* Full Name (standalone, first element) - WITH space */
+.register-card > form:first-of-type > .input-group:first-of-type label {
+    margin-bottom: 0.5rem;
+}
+
+/* Email + Phone row - NO space for Email label, WITH space for Phone label */
+.register-card > form:first-of-type > .form-row:first-of-type .input-group:first-of-type label {
+    margin-bottom: 0;
+}
+
+.register-card > form:first-of-type > .form-row:first-of-type .input-group:last-of-type label {
+    margin-bottom: 0.5rem;
+}
+
+/* City (standalone, after first form-row) - WITH space */
+.register-card > form:first-of-type > .input-group:nth-of-type(2) label {
+    margin-bottom: 0.5rem;
+}
+
+/* Password + Confirm row - NO space for both */
+.register-card > form:first-of-type > .form-row:last-of-type .input-group label {
+    margin-bottom: 0;
+}
+
+/* ============================================ */
+/* NGO FORM - Fix Password & Confirm Password layout */
+/* ============================================ */
+
+/* Target the NGO form (second form in register-card) */
+.register-card > form:last-of-type {
+    /* NGO form styles */
+}
+
+    /* Make sure all form-rows in NGO form work properly */
+    .register-card > form:last-of-type .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+        /* Ensure password row (last form-row) has proper layout */
+        .register-card > form:last-of-type .form-row:last-of-type {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+            /* Password and Confirm Password fields have equal width and proper spacing */
+            .register-card > form:last-of-type .form-row:last-of-type .input-group {
+                margin-bottom: 0;
+            }
+
+                .register-card > form:last-of-type .form-row:last-of-type .input-group label {
+                    display: block;
+                    margin-bottom: 0.5rem;
+                }
+
+                .register-card > form:last-of-type .form-row:last-of-type .input-group input {
+                    width: 100%;
+                    padding: 0.8rem 1rem;
+                    border: 1.5px solid #e2e8f0;
+                    border-radius: 0.75rem;
+                    font-size: 0.9rem;
+                    box-sizing: border-box;
+                }
+
+    /* Ensure Registration Number field stays full width */
+    .register-card > form:last-of-type > .input-group {
+        margin-bottom: 1.25rem;
+    }
+
+        .register-card > form:last-of-type > .input-group input {
+            width: 100%;
+        }
+
+/* ============================================ */
+/* VALIDATION ERRORS */
+/* ============================================ */
+
+.field-error {
+    font-size: 0.7rem;
     color: #dc2626;
-    margin-top: 3px;
+    margin-top: 0.3rem;
+    display: block;
 }
 
-.info-box {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 12px;
-    color: #166534;
-    margin-bottom: 16px;
-}
+/* ============================================ */
+/* ALERTS */
+/* ============================================ */
 
-.trow {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 14px;
-}
-
-    .trow input[type=checkbox] {
-        width: 15px;
-        height: 15px;
-        margin-top: 2px;
-        accent-color: #16a34a;
-        cursor: pointer;
-        flex-shrink: 0;
-    }
-
-    .trow label {
-        font-size: 12px;
-        color: #374151;
-        line-height: 1.6;
-        cursor: pointer;
-    }
-
-    .trow a {
-        color: #16a34a;
-        text-decoration: none;
-    }
-
-.submit-btn {
-    width: 100%;
-    padding: 10px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    background: #16a34a;
-    color: #fff;
-    cursor: pointer;
-    margin-bottom: 14px;
-}
-
-    .submit-btn:disabled {
-        background: #e5e7eb;
-        color: #9ca3af;
-        cursor: not-allowed;
-    }
-
-    .submit-btn:hover:not(:disabled) {
-        background: #15803d;
-    }
-
-.slink {
-    text-align: center;
-    font-size: 12px;
-    color: #6b7280;
-}
-
-    .slink a {
-        color: #16a34a;
-        font-weight: 600;
-        text-decoration: none;
-    }
-
+.alert-suc,
 .alert-err {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 8px;
-    padding: 9px 12px;
-    font-size: 12px;
-    color: #dc2626;
-    margin-bottom: 14px;
+    padding: 0.8rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
 }
 
 .alert-suc {
     background: #f0fdf4;
     border: 1px solid #bbf7d0;
-    border-radius: 8px;
-    padding: 9px 12px;
-    font-size: 12px;
-    color: #15803d;
-    margin-bottom: 14px;
+    color: #16a34a;
 }
 
-.opt-note {
-    font-size: 10px;
-    color: #9ca3af;
-    font-weight: 400;
-    margin-left: 4px;
+.alert-err {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+}
+
+/* ============================================ */
+/* INFO NOTE (NGO FORM) */
+/* ============================================ */
+
+.info-note {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.75rem;
+    padding: 0.8rem 1rem;
+    font-size: 0.8rem;
+    color: #1d4ed8;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    line-height: 1.5;
+}
+
+.info-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+/* ============================================ */
+/* CHECKBOX */
+/* ============================================ */
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin: 1rem 0 1.5rem;
+}
+
+    .checkbox-wrapper input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        margin-top: 0.2rem;
+        accent-color: #16a34a;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .checkbox-wrapper label {
+        font-size: 0.8rem;
+        color: #475569;
+        line-height: 1.4;
+        cursor: pointer;
+    }
+
+    .checkbox-wrapper a {
+        color: #16a34a;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .checkbox-wrapper a:hover {
+            text-decoration: underline;
+        }
+
+/* ============================================ */
+/* BUTTONS */
+/* ============================================ */
+
+.submit-btn {
+    width: 100%;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 0.9rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    background: linear-gradient(100deg, #0a5c2e, #16a34a);
+    color: white;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    margin-bottom: 1rem;
+}
+
+    .submit-btn:hover:not(:disabled) {
+        background: linear-gradient(100deg, #0c6b35, #1aad54);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px -8px rgba(22,163,74,0.5);
+    }
+
+    .submit-btn:disabled {
+        background: #cbd5e1;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+/* ============================================ */
+/* SIGN IN LINK */
+/* ============================================ */
+
+.signin-link {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 0;
+}
+
+    .signin-link a {
+        color: #16a34a;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .signin-link a:hover {
+            text-decoration: underline;
+        }
+
+/* ============================================ */
+/* RESPONSIVE */
+/* ============================================ */
+
+@media (max-width: 850px) {
+    .register-page {
+        padding: 1rem;
+    }
+
+    .brand-panel {
+        display: none;
+    }
+
+    .register-container {
+        border-radius: 1.5rem;
+    }
+
+    .form-panel {
+        padding: 1.5rem;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    /* Keep password row side by side on mobile? No, stack them */
+    .register-card > form:last-of-type .form-row:last-of-type {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-panel {
+        padding: 1rem;
+    }
+
+    .register-header h3 {
+        font-size: 1.5rem;
+    }
 }

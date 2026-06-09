@@ -1,17 +1,14 @@
 ﻿@page "/donor/donations"
 @layout DonorLayout
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Identity
 @using NekiConnect.Models
 @attribute [Authorize(Roles = "Donor")]
-@inject UserManager<ApplicationUser> UserManager
 @inject IDonationService DonationService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 @rendermode InteractiveServer
 
 <PageTitle>My Donations – NekiConnect</PageTitle>
-
 
 <h2 class="donor-page-title">My Donations</h2>
 <p class="donor-page-subtitle">Your complete donation history</p>
@@ -80,17 +77,27 @@
     [SupplyParameterFromQuery] public string? success { get; set; }
     [SupplyParameterFromQuery] public string? error { get; set; }
 
-    ApplicationUser? currentUser;
     List<Donation> donations = new();
     decimal totalDonated, thisMonth;
 
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
-        currentUser = await UserManager.GetUserAsync(auth.User);
-        if (currentUser == null) { Nav.NavigateTo("/login"); return; }
-        donations = await DonationService.GetDonationsByDonorIdAsync(currentUser.Id);
-        totalDonated = await DonationService.GetTotalDonatedAsync(currentUser.Id);
-        thisMonth = await DonationService.GetThisMonthDonatedAsync(currentUser.Id);
+
+        // ✅ Read userId from JWT claims — avoids DbContext conflict with UserManager
+        var userId = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId)) { Nav.NavigateTo("/login"); return; }
+
+        // ✅ Run all three DB calls in parallel — faster and no concurrency issue
+        var t1 = DonationService.GetDonationsByDonorIdAsync(userId);
+        var t2 = DonationService.GetTotalDonatedAsync(userId);
+        var t3 = DonationService.GetThisMonthDonatedAsync(userId);
+
+        await Task.WhenAll(t1, t2, t3);
+
+        donations = t1.Result;
+        totalDonated = t2.Result;
+        thisMonth = t3.Result;
     }
 }

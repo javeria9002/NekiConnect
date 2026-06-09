@@ -18,7 +18,7 @@
 /* Stat cards */
 .stat-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr); /* ✅ 4 columns now */
     gap: 1.25rem;
     margin-bottom: 1.25rem;
 }
@@ -42,6 +42,11 @@
     .stat-card.red {
         border-color: #fecaca;
     }
+
+    .stat-card.orange {
+        border-color: #fed7aa;
+    }
+/* ✅ new */
 
 .stat-ico {
     width: 38px;
@@ -68,6 +73,12 @@
         color: #dc2626;
     }
 
+    .stat-ico.orange {
+        background: #ffedd5;
+        color: #ea580c;
+    }
+/* ✅ new */
+
 .stat-num {
     font-size: 1.6rem;
     font-weight: 700;
@@ -85,6 +96,11 @@
 .red-t {
     color: #dc2626;
 }
+
+.orange-t {
+    color: #ea580c;
+}
+/* ✅ new */
 
 .stat-lbl {
     font-size: .82rem;
@@ -147,6 +163,7 @@
 .filter-btns {
     display: flex;
     gap: .5rem;
+    flex-wrap: wrap;
 }
 
 .fbtn {
@@ -193,6 +210,11 @@
 .border-red {
     border-left-color: #dc2626;
 }
+
+.border-orange {
+    border-left-color: #ea580c;
+}
+/* ✅ new */
 
 .rq-row {
     display: grid;
@@ -287,6 +309,12 @@
     color: #dc2626;
 }
 
+.badge-suspended {
+    background: #ffedd5;
+    color: #ea580c;
+}
+/* ✅ new */
+
 .rq-actions {
     display: flex;
     flex-direction: column;
@@ -340,7 +368,19 @@
             background: #b91c1c;
         }
 
-/* Inline reject */
+    /* ✅ Suspend button */
+    .act.suspend {
+        background: #fff;
+        border-color: #fed7aa;
+        color: #ea580c;
+    }
+
+        .act.suspend:hover {
+            background: #ffedd5;
+            border-color: #fb923c;
+        }
+
+/* Inline reason boxes */
 .reject-box {
     display: flex;
     gap: .6rem;
@@ -348,10 +388,12 @@
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid #f3f4f6;
+    flex-wrap: wrap;
 }
 
 .reject-inp {
     flex: 1;
+    min-width: 200px;
     border: 1.5px solid #e5e7eb;
     border-radius: 8px;
     padding: .55rem .8rem;
@@ -379,12 +421,57 @@
         background: #b91c1c;
     }
 
+/* ✅ Suspend confirm button */
+.suspend-confirm {
+    background: #ea580c !important;
+}
+
+    .suspend-confirm:hover {
+        background: #c2410c !important;
+    }
+
 .btn-cancel {
     background: transparent;
     border: none;
     color: #6b7280;
     font-size: .82rem;
     cursor: pointer;
+}
+
+/* ✅ Reason display boxes */
+.suspension-reason,
+.rejection-reason {
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+    border-radius: 8px;
+    padding: .65rem 1rem;
+    margin-top: .75rem;
+    font-size: .83rem;
+}
+
+.suspension-reason {
+    background: #ffedd5;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+}
+
+.rejection-reason {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.suspension-reason svg {
+    color: #ea580c;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.rejection-reason svg {
+    color: #dc2626;
+    flex-shrink: 0;
+    margin-top: 1px;
 }
 
 .empty {
@@ -397,7 +484,7 @@
 
 @media (max-width: 1000px) {
     .stat-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .rq-row {
@@ -406,5 +493,12 @@
 
     .rq-actions {
         flex-direction: row;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 600px) {
+    .stat-row {
+        grid-template-columns: 1fr;
     }
 }

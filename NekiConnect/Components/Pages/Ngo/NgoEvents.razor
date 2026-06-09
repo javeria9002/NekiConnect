@@ -6,8 +6,6 @@
 @inject AuthenticationStateProvider AuthProvider
 @attribute [Authorize(Roles = "NGO")]
 
-<Navbar/>
-
 <div class="ev-page">
 
     <!-- Header -->
@@ -16,13 +14,13 @@
             <h1 class="ev-title">Events</h1>
             <p class="ev-sub">Organise and manage volunteer events and activities.</p>
         </div>
-        @if (showForm || editing is not null)
+        @if (showForm)
         {
             <button class="btn-add" @onclick="CancelForm">Cancel</button>
         }
         else
         {
-            <button class="btn-add" @onclick="() => showForm = true">
+            <button class="btn-add" @onclick="() => { showForm = true; editing = null; }">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="8" x2="12" y2="16" />
@@ -34,7 +32,7 @@
     </div>
 
     <!-- Create / Edit form -->
-    @if (showForm || editing is not null)
+    @if (showForm)
     {
         var model = editing ?? newEvent;
         <div class="form-card">
@@ -93,8 +91,7 @@
             @foreach (var e in events)
             {
                 var isFull = e.SeatsAvailable > 0 && e.RegisteredCount >= e.SeatsAvailable;
-                var pct = e.SeatsAvailable > 0
-                                ? Math.Min(e.RegisteredCount * 100.0 / e.SeatsAvailable, 100) : 0;
+                var pct = e.SeatsAvailable > 0 ? Math.Min(e.RegisteredCount * 100.0 / e.SeatsAvailable, 100) : 0;
 
                 <div class="ev-card">
                     <div class="ev-card-top">
@@ -161,13 +158,14 @@
                             </svg>
                             Edit
                         </button>
-                        <button class="act del" @onclick="() => DeleteAsync(e.Id)">
+                        <button class="act del" @onclick="() => AskDelete(e.Id, e.Title)">
                             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <polyline points="3 6 5 6 21 6" />
                                 <path d="M19 6l-1 14H6L5 6" />
                                 <path d="M10 11v6" />
                                 <path d="M14 11v6" />
                             </svg>
+                            Delete
                         </button>
                     </div>
                 </div>
@@ -176,6 +174,33 @@
     }
 </div>
 
+<!-- Confirm Delete Modal -->
+@if (pendingDeleteId is not null)
+{
+    <div class="del-overlay">
+        <div class="del-modal">
+            <div class="del-icon">
+                <svg width="32" height="32" fill="none" stroke="#dc2626" stroke-width="1.5" viewBox="0 0 24 24">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14H6L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4h6v2" />
+                </svg>
+            </div>
+            <h3 class="del-title">Delete Event?</h3>
+            <p class="del-campaign-name">"@pendingDeleteTitle"</p>
+            <p class="del-sub">This cannot be undone. All volunteer applications linked to this event will also be removed.</p>
+            <div class="del-actions">
+                <button class="del-cancel" @onclick="CancelDelete">Cancel</button>
+                <button class="del-confirm" @onclick="ConfirmDelete" disabled="@isDeleting">
+                    @(isDeleting ? "Deleting..." : "Yes, Delete")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private NGO? ngo;
     private List<Event> events = new();
@@ -183,6 +208,11 @@
     private Event? editing;
     private bool showForm;
     private int viewingId;
+
+    // Delete confirmation properties
+    private int? pendingDeleteId;
+    private string pendingDeleteTitle = "";
+    private bool isDeleting;
 
     protected override async Task OnInitializedAsync()
     {
@@ -206,21 +236,25 @@
 
         if (editing is not null)
         {
+            // Update existing event
             await EventService.UpdateAsync(editing);
         }
         else
         {
+            // Create new event
             if (string.IsNullOrWhiteSpace(newEvent.Title)) return;
             newEvent.NgoId = ngo.Id;
             await EventService.CreateAsync(newEvent);
             newEvent = new() { EventDate = DateTime.Today, Status = "Upcoming" };
         }
+        
         CancelForm();
         await LoadAsync();
     }
 
     private void StartEdit(Event e)
     {
+        // ✅ Create a copy of the event for editing
         editing = new Event
         {
             Id = e.Id,
@@ -233,12 +267,31 @@
             Status = e.Status,
             NgoId = e.NgoId
         };
-        showForm = false;
+        
+        // ✅ IMPORTANT: Show the form
+        showForm = true;
     }
 
-    private async Task DeleteAsync(int id)
+    private void AskDelete(int id, string title)
     {
-        await EventService.DeleteAsync(id);
+        pendingDeleteId = id;
+        pendingDeleteTitle = title;
+    }
+
+    private void CancelDelete()
+    {
+        pendingDeleteId = null;
+        pendingDeleteTitle = "";
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (pendingDeleteId is null) return;
+        isDeleting = true;
+        await EventService.DeleteAsync(pendingDeleteId.Value);
+        isDeleting = false;
+        pendingDeleteId = null;
+        pendingDeleteTitle = "";
         await LoadAsync();
     }
 

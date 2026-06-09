@@ -10,7 +10,7 @@ namespace NekiConnect.Interfaces
         Task<List<NGO>> GetNGOsByStatusAsync(string status);
         Task ApproveNGOAsync(int ngoId);
         Task RejectNGOAsync(int ngoId, string reason);
-        Task SuspendNGOAsync(int ngoId);
+        Task SuspendNGOAsync(int ngoId, string reason);
         Task DeleteNGOAsync(int ngoId);
 
         // Stats
